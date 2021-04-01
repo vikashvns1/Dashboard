@@ -1,0 +1,241 @@
+﻿@layout AdminLayout
+@page "/Admin"
+@inject NavigationManager urihelper;
+@using Microsoft.Extensions.Configuration
+@inject IConfiguration  _configuration
+@using DashBoardModel
+@inject Radzen.DialogService dialogService
+@inject NotificationService notificationService
+@inject TooltipService tooltipService
+
+@if (StaticDataSource.AdminData == null)
+{
+    <p><em>Loading....</em></p>
+    <RadzenProgressBar Mode="ProgressBarMode.Indeterminate"></RadzenProgressBar>
+}
+else
+{
+    <div style="width:100%">
+        <div class="row">
+            <div class="col-6 d-flex align-items-baseline ">
+                <h3>Customers </h3>
+            </div>
+            <div class="col-6 d-flex align-items-end justify-content-end">
+                <RadzenButton Icon="add" Text="Add New" Size="ButtonSize.Small" Click="@(args => dialogService.Open<CreateCompony>("Add New Customer",null,new DialogOptions(){ Width = "auto", Height = "auto" }))" />
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-12 overflow-auto">
+                <RadzenGrid @ref="@ordersGrid" AllowFiltering="true" FilterCaseSensitivity="FilterCaseSensitivity.Default" AllowSorting="false" Data="@(StaticDataSource.AdminData.Where(e => ActiveStatus >= 0 ? e.Active == ActiveStatus : true))" TItem="CompanyProfile">
+                    <Columns>
+                        <RadzenGridColumn TItem="CompanyProfile" Context="data" Property="Id" Title="Id" Width="50px">
+                        </RadzenGridColumn>
+                        <RadzenGridColumn TItem="CompanyProfile" Context="data"  Title="Compony Name" Width="180px">
+                            <Template>
+                                <RadzenLabel MouseEnter="@(args => ShowTooltip(args,data.Name) )" Text="@data.Name" Style="width:100%;" ReadOnly="true"></RadzenLabel>
+                            </Template>
+                            <EditTemplate Context="data">
+                                <RadzenTextBox @bind-Value="data.Name"  Name="Name" Style="width:100%"></RadzenTextBox>
+                                <RadzenRequiredValidator Component="Name" Text="Name is required" Popup="true" Style="position: absolute" />
+                            </EditTemplate>
+                        </RadzenGridColumn>
+                        <RadzenGridColumn TItem="CompanyProfile" Context="data" Property="UserId" Title="UserId" Width="120px">
+                            <EditTemplate Context="data">
+                                <RadzenTextBox @bind-Value="data.UserId" Name="UserId" Style="width:100%"></RadzenTextBox>
+                                <RadzenRequiredValidator Component="UserId" Text="UserId is required" Popup="true" Style="position: absolute" />
+                            </EditTemplate>
+                        </RadzenGridColumn>
+                        <RadzenGridColumn TItem="CompanyProfile" Context="data" Property="Password" Filterable="false" Title="Password" Width="120px">
+                            <EditTemplate Context="data">
+                                <RadzenTextBox @bind-Value="data.Password" Name="Password" Style="width:100%"></RadzenTextBox>
+                                <RadzenRequiredValidator Component="Password" Text="Password is required" Popup="true" Style="position: absolute" />
+                            </EditTemplate>
+                        </RadzenGridColumn>
+                        <RadzenGridColumn TItem="CompanyProfile" Context="data" Title="ConnectionString" Filterable="false" Width="200px">
+                            <Template>
+                                <RadzenLabel MouseEnter="@(args => ShowTooltip(args,data.ConnectionString) )" Text="@data.ConnectionString" Style="width:100%;" ReadOnly="true"></RadzenLabel>
+                            </Template>
+                            <EditTemplate Context="data">
+                                <RadzenTextArea @bind-Value="@data.ConnectionString" Name="ConnectionString" Style="height:100px;width:100%;"></RadzenTextArea>
+                                <RadzenRequiredValidator Component="ConnectionString" Text="ConnectionString is required" Popup="true" Style="position: absolute" />
+
+                            </EditTemplate>
+                        </RadzenGridColumn>
+                        <RadzenGridColumn TItem="CompanyProfile" Context="data" Property="ProviderName" Filterable="false" Title="ProviderName">
+                            <EditTemplate Context="data">
+                                <RadzenTextBox @bind-Value="data.ProviderName" ></RadzenTextBox>
+
+                            </EditTemplate>
+                        </RadzenGridColumn>
+                        <RadzenGridColumn TItem="CompanyProfile" Context="data" Property="EmailId" Title="Email" Width="150">
+                            <EditTemplate Context="data">
+                                <RadzenTextBox @bind-Value="data.EmailId" Name="EmailId" Style="width:100%;"></RadzenTextBox>
+                                <RadzenEmailValidator Component="EmailId" Text="Provide a valid email address" Popup="true" Style="position: absolute" />
+                            </EditTemplate>
+                        </RadzenGridColumn>
+                        <RadzenGridColumn TItem="CompanyProfile" Context="data" Property="Address" Filterable="false" Title="Address" Width="200px">
+                            <Template>
+                                <RadzenLabel MouseEnter="@(args => ShowTooltip(args,data.Address) )" Text="@data.Address" Style="width:100%;" ReadOnly="true"></RadzenLabel>
+                            </Template>
+                            <EditTemplate Context="data">
+                                <RadzenTextBox @bind-Value="data.Address" Style="width:100%" ></RadzenTextBox>
+                            </EditTemplate>
+                        </RadzenGridColumn>
+                        <RadzenGridColumn TItem="CompanyProfile" Context="data" Property="ContanctNumber" Title="Contact Number" Width="150px">
+                            <EditTemplate Context="data">
+                                <RadzenTextBox @bind-Value="data.ContanctNumber" Name="ContanctNumber" Style="width:100%;"></RadzenTextBox>
+                                <RadzenLengthValidator Component="ContanctNumber" Min="10" Max="10" Text="ContanctNumber should be at least 10 Digit" Popup="true" Style="position: absolute" />
+                            </EditTemplate>
+                        </RadzenGridColumn>
+                        <RadzenGridColumn TItem="CompanyProfile" Context="data" Property="ContactPerson" Filterable="false" Title="Contact Person" Width="150px">
+                            <EditTemplate Context="data">
+                                <RadzenTextBox @bind-Value="data.ContactPerson" Style="width:100%;"></RadzenTextBox>
+                            </EditTemplate>
+                        </RadzenGridColumn>
+                        <RadzenGridColumn TItem="CompanyProfile" Context="data" Property="ImageUrl" Filterable="false" Title="ImageUrl" Width="150px">
+                            <EditTemplate Context="data">
+                                <RadzenTextBox @bind-Value="data.ImageUrl" Style="width:100%"></RadzenTextBox>
+                            </EditTemplate>
+                        </RadzenGridColumn>
+                        <RadzenGridColumn TItem="CompanyProfile" Context="data" Property="ImageName" Filterable="false" Title="ImageName" Width="120px">
+                            <EditTemplate Context="data">
+                                <RadzenTextBox @bind-Value="data.ImageName" Style="width:100%" ></RadzenTextBox>
+                            </EditTemplate>
+                        </RadzenGridColumn>
+                        <RadzenGridColumn TItem="CompanyProfile" Context="data" Property="BgColorCode" Filterable="false" Title="Header ColorCode" Width="120px">
+                            <EditTemplate Context="data">
+                                <RadzenTextBox @bind-Value="data.BgColorCode" Style="width:100%"></RadzenTextBox>
+                            </EditTemplate>
+                        </RadzenGridColumn>
+                        <RadzenGridColumn TItem="CompanyProfile" Context="data" Property="Plan" Title="Plan" Type="string" Width="120px">
+                            <EditTemplate Context="data">
+                                <select id="select-box" @bind="@data.Plan" class="dropdown" style="width:100%">
+                                    <option>Premium</option>
+                                    <option>Gold</option>
+                                    <option>Silver</option>
+                                </select>
+                            </EditTemplate>
+                        </RadzenGridColumn>
+                        <RadzenGridColumn TItem="CompanyProfile" Context="data" Property="Paid" Title="Paid" Width="120px">
+                            <EditTemplate Context="data">
+                                <select id="select-box" @bind="@data.Paid" class="dropdown" style="width:100%">
+                                    <option>Paid</option>
+                                    <option>Unpaid</option>
+                                </select>
+                            </EditTemplate>
+                        </RadzenGridColumn>
+                        <RadzenGridColumn TItem="CompanyProfile" Context="data" Title="Active" Width="120px">
+                            <Template>
+                                @{ string Active = (data.Active == 1) ? "Active" : "Inactive";
+                                    <RadzenLabel Text="@Active" Style="width:100%"></RadzenLabel>
+                                }
+                            </Template>
+                            <EditTemplate Context="data">
+                                <select id="select-box" @bind="@data.Active" class="dropdown" style="width:100%">
+                                    <option value="0">Inactive</option>
+                                    <option value="1">Active</option>
+                                </select>
+                            </EditTemplate>
+                            <FilterTemplate Context="data">
+                                <select id="select-box" @bind="@ActiveStatus" class="dropdown" style="width:100%">
+                                    <option value="-1">All</option>
+                                    <option value="0">Inactive</option>
+                                    <option value="1">Active</option>
+                                </select>
+                            </FilterTemplate>
+                        </RadzenGridColumn>
+                        <RadzenGridColumn TItem="CompanyProfile" Context="data" Title="View Configuration" TextAlign="TextAlign.Center" Width="100px">
+                            <Template>
+                                <RadzenLink Text="View" @onclick="@(args => navigatetoDetails(data.Id))" />
+                            </Template>
+                        </RadzenGridColumn>
+                        <RadzenGridColumn TItem="CompanyProfile" Context="data" TextAlign="TextAlign.Center" Width="100px" Title="Edit">
+                            <Template>
+                                <RadzenButton Icon="edit" Size="ButtonSize.Small" Click="@(args => EditRow(data))" />
+                            </Template>
+                            <EditTemplate>
+                                <RadzenButton Icon="save" Size="ButtonSize.Small" Click="@((args) => UpdateRow(data))" />
+                                <RadzenButton Icon="cancel" Size="ButtonSize.Small" ButtonStyle="ButtonStyle.Secondary" Click="@((args) => CancelEdit(data))" />
+                            </EditTemplate>
+                        </RadzenGridColumn>
+                    </Columns>
+                </RadzenGrid>
+            </div>
+        </div>
+    </div>
+}
+@code {
+    [Inject]
+    public IDynamicAPIService dynamicAPIService { get; set; }
+    int ActiveStatus = -1;
+    static string conn;
+    protected override async Task OnInitializedAsync()
+    {
+        dialogService.OnClose += Close;
+
+        if (StaticDataSource.IsInitialRenderAppConfig == false)
+        {
+            StaticDataSource.IsInitialRenderAppConfig = true;
+            conn = _configuration.GetConnectionString("DashBoardConnection");
+
+            string storeProc = "GetComponyInfoById";
+
+            List<CompanyProfile> _chartConfigurationList = new List<CompanyProfile>();
+            _chartConfigurationList = await dynamicAPIService.GetAllAdminData(conn, storeProc);
+
+            StaticDataSource.AdminData = _chartConfigurationList;
+
+        }
+    }
+
+    void Close(dynamic result)
+    {
+        if (result != null)
+        {
+            var result1 = result as CompanyProfile;
+            this.StateHasChanged();
+            notificationService.Notify(new NotificationMessage() { Severity = NotificationSeverity.Success, Summary = "Customer Registered ", Detail = $"Customer {result1.Name} with Id {result1.Id} has beed added.", Duration = 4000 });
+        }
+    }
+
+    RadzenGrid<CompanyProfile> ordersGrid = null;
+
+    void navigatetoDetails(int Id)
+    {
+        urihelper.NavigateTo("/ChartsConfigurationComponents/?Id=" + Id);
+    }
+
+    void EditRow(CompanyProfile CompProp)
+    {
+        // Set the grid row in edit mode.
+        ordersGrid.EditRow(CompProp);
+    }
+
+    async Task UpdateRow(CompanyProfile CompProp)
+    {
+        // Set the grid row in read-only mode.
+        await ordersGrid.UpdateRow(CompProp);
+
+        // Update your data with provided values.
+
+        int i = await dynamicAPIService.InsertEditCustomer(conn, CompProp);
+        var found = StaticDataSource.AdminData.FirstOrDefault(c => c.Id == CompProp.Id);
+        found = CompProp;
+        notificationService.Notify(new NotificationMessage() { Severity = NotificationSeverity.Success, Summary = "Customer Updated ", Detail = $"Customer {CompProp.Name} with Id {CompProp.Id} has Updated.", Duration = 4000 });
+
+    }
+
+    void CancelEdit(CompanyProfile CompProp)
+    {
+        // Set the grid row in read-only mode.
+        ordersGrid.CancelEditRow(CompProp);
+
+        // Revert all changes.
+        //var orderEntry = dbContext.Entry(CompProp);
+        // orderEntry.CurrentValues.SetValues(orderEntry.OriginalValues);
+        //orderEntry.State = EntityState.Unchanged;
+    }
+
+    void ShowTooltip(ElementReference elementReference,string content, TooltipOptions options = null) => tooltipService.Open(elementReference, content, options);
+
+}

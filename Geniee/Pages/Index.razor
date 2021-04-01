@@ -1,0 +1,227 @@
+﻿@page "/Index"
+@using System.Data;
+@using System.Dynamic;
+@using DashBoardModel
+@using Newtonsoft.Json;
+@using System.Collections.ObjectModel;
+@using System.ComponentModel;
+
+<div>
+    @if (StaticDataSource.chartAttributesList == null)
+    {
+        <div class="col-md-12 mt-3">
+            <h3><em>initializing application please wait </em></h3>
+            <RadzenProgressBar Value="100" ShowValue="false" Mode="ProgressBarMode.Indeterminate" Style="margin-bottom: 20px" />
+        </div>
+    }
+    else
+    {
+        bool IsTabLoad = false;
+        <div class="card">
+            <div class="card-header">
+                <div style="font-weight:bold;text-align:center">@StaticDataSource.MenuItem.Menu</div>
+            </div>
+        </div>
+        <div class="row">
+            @foreach (GetRequestConfiguration item in StaticDataSource.chartAttributesList.Where(_dashboard => _dashboard.DashBoardNo == StaticDataSource.MenuItem.DashBoardNo).OrderBy(a => a.ChartOrder))
+            {
+                @if (item.ChartType != "Tab")
+                {
+                    <div class="@item.BlockPosition" style="display:table-cell; width: 100%;">
+                        <DashBoardrazor ChartSource="item" Click="@OpenPopUP"></DashBoardrazor>
+                    </div>
+                }
+                else
+                {
+                    if (IsTabLoad == false)
+                    {
+                        IsTabLoad = true;
+                        <div class="@item.BlockPosition" style="display:table-cell; width: 100%;">
+                            <div class="card" style="box-shadow: 5px 10px 18px #888888; border-radius: 20px;height:100%">
+                                <DxTabs>
+                                    @foreach (GetRequestConfiguration itemTab in StaticDataSource.chartAttributesList.Where(a => a.ChartType == "Tab" && a.DashBoardNo == StaticDataSource.MenuItem.DashBoardNo).OrderBy(a => a.ChartOrder))
+                                    {
+                                        <DxTabPage Text="@itemTab.XAxixValueColumnName">
+                                            <div class="card-header">
+                                                <div style="font-weight:bold;text-align:center">@itemTab.Title</div>
+                                            </div>
+                                            <div class="card-body">
+                                                <DxDataGrid Data="@itemTab.TableData" HorizontalScrollBarMode="ScrollBarMode.Auto" VerticalScrollBarMode="ScrollBarMode.Auto"
+                                                            T="@object" ShowFilterRow="false" AllowColumnDragDrop="false" ShowPager="false" AllowSort="false" SelectionMode="DataGridSelectionMode.None"
+                                                            CssClass="mw-1100">
+
+                                                    <Columns>
+                                                        @foreach (DataColumn col in itemTab.ColumnDataTable.Columns)
+                                                        {
+                                                            switch (col.DataType.FullName)
+                                                            {
+                                                                case "System.Int32":
+                                                                    <DxDataGridSpinEditColumn Field="@col.ToString()"></DxDataGridSpinEditColumn> break;
+                                                                case "System.DateTime":
+                                                                    <DxDataGridDateEditColumn Field="@col.ToString()"></DxDataGridDateEditColumn> break;
+                                                                case "System.String":
+                                                                    <DxDataGridColumn Field="@col.ToString()"></DxDataGridColumn>break;
+                                                                default:
+                                                                    <DxDataGridColumn Field="@col.ToString()"></DxDataGridColumn>break;
+                                                            }
+                                                        }
+                                                    </Columns>
+                                                </DxDataGrid>
+                                            </div>
+                                        </DxTabPage>
+                                    }
+                                </DxTabs>
+                            </div>
+                        </div>
+                    }
+                }
+                @if (isActive == true)
+                {
+                    <ChartPopUpComponent ShowPopup="true" ChartPopUpSource="PopData" Click="@ClosePopUp"></ChartPopUpComponent>
+                }
+            }
+        </div>
+    }
+</div>
+@code {
+    [Inject]
+    public IDynamicAPIService dynamicAPIService { get; set; }
+    public GetRequestConfiguration PopData;
+    public bool isActive = false;
+    protected void OpenPopUP(GetRequestConfiguration args)
+    {
+        if (args.IsPopUpOpen == 1)
+        {
+            isActive = true;
+            PopData = args;
+        }
+        //PopData.ShowPopup = true;
+    }
+
+    protected void ClosePopUp(MouseEventArgs args)
+    {
+        isActive = false;
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+
+            List<StoreProcedures> storeprocslist = StaticDataSource.chartAttributesList.Where(a => a.ChartType != "Report" && a.DashBoardNo == StaticDataSource.MenuItem.DashBoardNo).Select(Result => new StoreProcedures { Id = Result.Id, SpOrQuery = Result.QueryOrSp, IsSp = Result.IsSp }).ToList();
+
+            //var count= storeprocslist.Where
+            storeprocslist = await dynamicAPIService.GetAllChartsData(storeprocslist, StaticDataSource.MenuItem.ConnectionString, StaticDataSource.MenuItem.ProviderName);
+
+            foreach (GetRequestConfiguration Chartitem in StaticDataSource.chartAttributesList.Where(a => a.ChartType != "Report" && a.DashBoardNo == StaticDataSource.MenuItem.DashBoardNo))
+            {
+                var ChartDataObj = storeprocslist.Where(a => a.Id == Chartitem.Id).Select(b => b.ChatData).FirstOrDefault();
+
+                if (Chartitem.ChartType.ToLower() != "Tab".ToLower() && Chartitem.ChartType.ToLower() != "Report".ToLower() && Chartitem.ChartType.ToLower() != "Data".ToLower() && Chartitem.ChartType.ToLower() != "CardData".ToLower())
+                {
+                    List<DataClass> chartDataList = new List<DataClass>();
+                    foreach (var inputAttribute in ChartDataObj)
+                    {
+                        DataClass row = new DataClass();
+                        foreach (KeyValuePair<string, object> itm in inputAttribute)
+                        {
+                            // Create a new dynamic ExpandoObject
+                            if (itm.Key.ToString() == Chartitem.XAxixValueColumnName)
+                                row.XData = itm.Value.ToString();
+                            else if (itm.Key.ToString() == Chartitem.YAxixValueColumnName1)
+                                row.YData1 = (itm.Value == null) ? 0 : Convert.ToDouble((itm.Value.ToString()));
+                            else if (itm.Key.ToString() == Chartitem.YAxixValueColumnName2)
+                                row.YData2 = (itm.Value == null) ? 0 : Convert.ToDouble((itm.Value.ToString()));
+                            else if (itm.Key.ToString() == Chartitem.YAxixValueColumnName3)
+                                row.YData3 = (itm.Value == null) ? 0 : Convert.ToDouble((itm.Value.ToString()));
+                            else if (itm.Key.ToString() == Chartitem.YAxixValueColumnName4)
+                                row.YData4 = (itm.Value == null) ? 0 : Convert.ToDouble((itm.Value.ToString()));
+                            else if (itm.Key.ToString() == Chartitem.YAxixValueColumnName5)
+                                row.YData5 = (itm.Value == null) ? 0 : Convert.ToDouble((itm.Value.ToString()));
+                            if (Chartitem.ChartType == "Scatter" || Chartitem.ChartType == "Common" || Chartitem.ChartType == "Bubble" || Chartitem.ChartType == "MultiAxis")
+                            {
+                                if (itm.Key.ToString() == Chartitem.GroupKey)
+                                    row.GropKey = itm.Value.ToString();
+                            }
+                        }
+                        // Add the object to the dynamic output list
+                        chartDataList.Add(row);
+                    }
+                    Chartitem.ChartData = chartDataList;
+                }
+                else if ((Chartitem.ChartType.ToLower() == "Tab".ToLower() || Chartitem.ChartType.ToLower() == "Data".ToLower()) && Chartitem.ChartType.ToLower() != "CardData".ToLower())
+                {
+                    Chartitem.TableData = ChartDataObj;
+                    var json = JsonConvert.SerializeObject(ChartDataObj);
+                    Chartitem.ColumnDataTable = (DataTable)JsonConvert.DeserializeObject(json, (typeof(DataTable)));
+                }
+                else if (Chartitem.ChartType.ToLower() == "CardData".ToLower() && Chartitem.ChartType.ToLower() != "Data".ToLower())
+                {
+                    foreach (var inputAttribute in ChartDataObj)
+                    {
+                        foreach (KeyValuePair<string, object> itm in inputAttribute)
+                        {
+                            if (itm.Key.ToString() == Chartitem.XAxixValueColumnName)
+                                Chartitem.YAxixValueColumnName1 = (itm.Value == null) ? null : itm.Value.ToString().Trim();
+                        }
+                    }
+                }
+
+                if (Chartitem.Filter != null)
+                {
+                    foreach (Param prm in Chartitem.Filter)
+                    {
+                        if (prm.Control == "ddl")
+                        {
+                            if (prm.ddlData == "XValue")
+                            {
+                                DataClass dt = new DataClass();
+                                dt.XData = "ALL";
+                                dt.YData1 = 0; dt.YData2 = 0; dt.YData3 = 0; dt.YData4 = 0; dt.YData5 = 0;
+                                List<DataClass> dtr = new List<DataClass>();
+                                if (prm.Multiple == "false")
+                                    dtr.Add(dt);
+                                dtr.AddRange(Chartitem.ChartData);
+                                prm.ControlData = dtr;
+                            }
+                            else
+                            {//Change Required in API Function GetAppConfiguration
+                                Param prm2 = new Param();
+                                prm2.IsSp = prm.IsSp;
+                                prm2.QueryOrSp = prm.Sp;
+
+                                string strDdl = await dynamicAPIService.GetDatabyParam(StaticDataSource.MenuItem.ConnectionString, StaticDataSource.MenuItem.ProviderName, prm2);
+                                var response = JsonConvert.DeserializeObject<OutputData>(strDdl);
+                                var ddlresponse = new ObservableCollection<ExpandoObject>(response.DynamicData);
+                                List<DataClass> dtr = new List<DataClass>();
+                                DataClass dt = new DataClass();
+                                dt.XData = "ALL";
+                                dt.YData1 = -1; dt.YData2 = 0; dt.YData3 = 0; dt.YData4 = 0; dt.YData5 = 0;
+                                dtr.Add(dt);
+                                foreach (var input in ddlresponse)
+                                {
+                                    DataClass row = new DataClass();
+                                    foreach (KeyValuePair<string, object> itms in input)
+                                    {
+                                        // Create a new dynamic ExpandoObject
+                                        if (itms.Key.ToString() == prm.ddlData)
+                                            row.XData = itms.Value.ToString();
+                                        else if (itms.Key.ToString() == prm.ddlValue)
+                                            row.YData1 = (itms.Value == null) ? 0 : Convert.ToDouble((itms.Value.ToString()));
+                                    }
+                                    // Add the object to the dynamic output list
+                                    dtr.Add(row);
+                                }
+                                prm.ControlData = dtr;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        catch (Exception e)
+        {
+            var v = e.Message;
+        }
+    }
+}

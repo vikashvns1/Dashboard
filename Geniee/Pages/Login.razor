@@ -1,0 +1,76 @@
+﻿@layout LoginLayout
+@page "/"
+@using DashBoardModel
+@inject NavigationManager navigationManager
+@inject AuthenticationStateProvider  authenticationStateProvider
+@using Microsoft.Extensions.Configuration
+@inject IConfiguration  _configuration
+@using Newtonsoft.Json;
+
+    <div class="container-fluid" style="width :100%">
+        <div class="col-12">
+            <h2>Login to your account</h2>
+            <EditForm Model="model" OnValidSubmit="LoginUser">
+                <RadzenCard>
+                    <AlertMessage Message="@message" MessageType="@messageType" />
+                    <DataAnnotationsValidator />
+                    <ValidationSummary />
+
+                    <label>UserId</label>
+                    <RadzenTextBox @bind-Value="model.UserId"></RadzenTextBox>
+
+                    <label>Password</label>
+                    <RadzenPassword @bind-Value="model.Password"></RadzenPassword>
+
+                    <hr />
+                    <RadzenButton ButtonType="Radzen.ButtonType.Submit" Text="Login"
+                                  ButtonStyle="Radzen.ButtonStyle.Primary" class="btn-block mr-2"
+                                  Disabled="isBusy" Style="background-color:#303EA0;color:white" />
+                </RadzenCard>
+            </EditForm>
+        </div>
+    </div>
+
+
+    @code {
+
+        LoginRequest model = new LoginRequest();
+
+        bool isBusy = false;
+        string message = string.Empty;
+        AlertMessageType messageType = AlertMessageType.Success;
+        [Inject]
+        public IDynamicAPIService dynamicAPIService { get; set; }
+
+        public async Task LoginUser()
+        {
+            string conn = _configuration.GetConnectionString("DashBoardConnection");
+            isBusy = true;
+            string storeProc = "GetComponyInfoById";
+            var result = await dynamicAPIService.GetComponyData(conn, storeProc, model.UserId, model.Password);
+
+            if (result.Id != 0)
+            {
+                if (result.Name == "Admin")
+                {
+                    StaticDataSource.userInfo = result;
+                    navigationManager.NavigateTo("/Admin");
+                }
+                else
+                {
+                    StaticDataSource.userInfo = result;
+                    var menu = await dynamicAPIService.GetMenuData(conn, StaticDataSource.userInfo.Id);
+                    List<MenuItem> Objmenus = JsonConvert.DeserializeObject<List<MenuItem>>(menu);
+                    StaticDataSource.MenuItemList = Objmenus.OrderBy(a=>a.MenuOrder).ToList();
+                    navigationManager.NavigateTo("/Home");
+                }
+            }
+            else
+            {
+                message = "UserId and Password are wrong!";
+                messageType = AlertMessageType.Error;
+            }
+            isBusy = false;
+        }
+
+    }

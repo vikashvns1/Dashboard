@@ -1,0 +1,162 @@
+﻿@page "/ReportComponent"
+@using System.Collections.Generic;
+@using System.Collections.ObjectModel;
+@using System.ComponentModel;
+@using System.Data;
+@using System.Dynamic;
+@using DashBoardModel;
+@using Newtonsoft.Json;
+@using System.IO;
+@using System.Web
+@inject NavigationManager NavigationManager
+@using Syncfusion.Blazor.Grids
+@using Syncfusion.Blazor.Data
+@using Syncfusion.Blazor;
+@using System.Threading
+@using System.Threading.Tasks
+@using Microsoft.AspNetCore.Http;
+@using Microsoft.AspNetCore.WebUtilities;
+@using Microsoft.Extensions.Primitives;
+@inject Radzen.DialogService dialogService
+
+@if (StaticDataSource.chartAttributesList.OrderBy(a => a.ChartOrder).Where(a => a.ChartType == "Report" && a.Id == StaticDataSource.MenuItem.ComponentId).FirstOrDefault().TableData == null)
+{
+<p><em>Loading...</em></p> }
+else
+{
+chartdetails = StaticDataSource.chartAttributesList.OrderBy(a => a.ChartOrder).Where(a => a.ChartType == "Report" && a.Id == StaticDataSource.MenuItem.ComponentId).FirstOrDefault();
+int count = chartdetails.ColumnDataTable.Rows.Count;
+RowCount = count.ToString();
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <div style="font-weight:bold;text-align:center">@StaticDataSource.MenuItem.Menu</div>
+            </div>
+            <div class="card-body">
+
+                <SfGrid DataSource="@StaticDataSource.chartAttributesList.OrderBy(a => a.ChartOrder).Where(a => a.ChartType == "Report" && a.Id == StaticDataSource.MenuItem.ComponentId).FirstOrDefault().TableData" GridLines="@GridLine.Both" @ref="DefaultGrid"
+                        TValue="ExpandoObject" Toolbar="@Toolbaritems" AllowFiltering="true" Width="100%"
+                        AllowGrouping="true" AllowMultiSorting="true" AllowSorting="true" ShowColumnChooser="true" AllowReordering="true" AllowTextWrap="true" AllowResizing="true" AllowPdfExport="true" AllowExcelExport="true">
+                    <GridFilterSettings Type="Syncfusion.Blazor.Grids.FilterType.Menu"></GridFilterSettings>
+                    <GridEvents OnToolbarClick="ToolbarClickHandler" TValue="ExpandoObject"></GridEvents>
+
+                    <GridColumns>
+                        @foreach (DataColumn col in StaticDataSource.chartAttributesList.OrderBy(a => a.ChartOrder).Where(a => a.ChartType == "Report" && a.Id == StaticDataSource.MenuItem.ComponentId).FirstOrDefault().ColumnDataTable.Columns)
+                        {
+                            switch (col.DataType.FullName)
+                            {
+                                case "System.Int32":
+<GridColumn Field="@col.ToString()" Type="ColumnType.Number" HeaderTextAlign="@Syncfusion.Blazor.Grids.TextAlign.Center" TextAlign="Syncfusion.Blazor.Grids.TextAlign.Right"></GridColumn> break;
+case "System.DateTime":
+<GridColumn Field="@col.ToString()" Type="ColumnType.Date" Format="MM/dd/yyyy" HeaderTextAlign="Syncfusion.Blazor.Grids.TextAlign.Center" /> break;
+case "System.String":
+<GridColumn Field="@col.ToString()" Type="ColumnType.String" HeaderTextAlign="Syncfusion.Blazor.Grids.TextAlign.Center" /> break;
+default:
+<GridColumn Field="@col.ToString()" Type="ColumnType.String" HeaderTextAlign="Syncfusion.Blazor.Grids.TextAlign.Center" />break;
+}
+}
+                    </GridColumns>
+                </SfGrid>
+            </div>
+        </div>
+    </div>
+</div>}
+<style> 
+    /*To Apply background color to Toolbar items*/ 
+    .e-toolbar.fill-class, 
+    .e-toolbar.fill-class .e-toolbar-items, 
+    .e-toolbar.fill-class .e-toolbar-items .e-toolbar-item, 
+    .e-toolbar.fill-class .e-toolbar-items .e-toolbar-item button { 
+        background-color: gray !important; 
+    } 
+  
+    /*To Apply background color while select/hover/focus the Toolbar button*/
+        .e-toolbar.fill-class .e-toolbar-items .e-toolbar-item .e-tbar-btn.e-btn:hover,
+        .e-toolbar.fill-class .e-toolbar-items .e-toolbar-item .e-tbar-btn.e-btn:active,
+        .e-toolbar.fill-class .e-toolbar-items .e-toolbar-item .e-tbar-btn.e-btn:focus {
+            background-color: aquamarine !important;
+        } 
+</style> 
+
+@code
+{ string RowCount;
+    [Inject]
+    public IDynamicAPIService dynamicAPIService { get; set; }
+    public GetRequestConfiguration chartdetails { get; set; }
+
+    //List<ExpandoObject> _data = StaticDataSource.chartAttributesList.OrderBy(a => a.ChartOrder).Where(a => a.ChartType == "Report" && a.Id == StaticDataSource.MenuItem.ComponentId).FirstOrDefault().TableData;
+
+    SfGrid<ExpandoObject> DefaultGrid;
+
+    bool IsFistRender = false;
+    private List<Object> Toolbaritems = new List<Object>(); //{ "Total Rows : " + RowCount, "Print", "ExcelExport", "PdfExport", "ColumnChooser", "Search", new ItemModel() { Text = "Click", TooltipText = "Click", PrefixIcon = "e-click", Id = "Click" } };
+
+    protected override async Task OnInitializedAsync()
+    {
+        RowCount = StaticDataSource.chartAttributesList.OrderBy(a => a.ChartOrder).Where(a => a.ChartType == "Report" && a.Id == StaticDataSource.MenuItem.ComponentId).FirstOrDefault().ColumnDataTable.Rows.Count.ToString();
+
+        Toolbaritems = new List<Object>() { "Total Rows : " + RowCount, "Print", "ExcelExport", "PdfExport", "ColumnChooser", "Search", new ItemModel() { Text = "Send Mail", TooltipText = "Send Mail", CssClass = "e-toolbar.fill-class", Id = "Click", Type=ItemType.Button} };
+
+        chartdetails = StaticDataSource.chartAttributesList.OrderBy(a => a.ChartOrder).Where(a => a.ChartType == "Report" && a.Id == StaticDataSource.MenuItem.ComponentId).FirstOrDefault();
+
+    }
+
+    public void ToolbarClickHandler(Syncfusion.Blazor.Navigations.ClickEventArgs Args)
+    {
+        if (Args.Item.Text == "PDF Export")
+        {
+            List<PdfHeaderFooterContent> HeaderContent = new List<PdfHeaderFooterContent>
+            {
+                new PdfHeaderFooterContent()
+                {
+                    Type = ContentType.Text,
+                    Value = chartdetails.Title,
+                    Position = new PdfPosition() { X = 280, Y = 0 },
+                    Style = new PdfContentStyle() { TextBrushColor = "#000000", FontSize = 13 , HAlign=PdfHorizontalAlign.Center},
+                 }
+            };
+
+            PdfExportProperties ExportProperties = new PdfExportProperties();
+            ExportProperties.ExportType = Syncfusion.Blazor.Grids.ExportType.CurrentPage;
+            ExportProperties.FileName = chartdetails.Title + System.DateTime.Now + ".pdf";
+            PdfHeader Header = new PdfHeader()
+            {
+                FromTop = 0,
+                Height = 20,
+                Contents = HeaderContent,
+
+            };
+            ExportProperties.Header = Header;
+            this.DefaultGrid.PdfExport(ExportProperties);
+        }
+        else if (Args.Item.Text == "Excel Export")
+        {
+            int count = DefaultGrid.Columns.Count;
+            //var heidencolumnCount = DefaultGrid.CurrentViewData;
+            ExcelExportProperties ExportProperties = new ExcelExportProperties();
+            ExportProperties.ExportType = Syncfusion.Blazor.Grids.ExportType.CurrentPage;
+            ExportProperties.FileName = chartdetails.Title + System.DateTime.Now + ".xlsx";
+            List<ExcelCell> ExcelCells1 = new List<ExcelCell> { new ExcelCell() { Index = 1, ColSpan = count, Value = chartdetails.Title, Style = new ExcelStyle() { FontColor = "#C25050", FontSize = 12, HAlign = ExcelHorizontalAlign.Center, Bold = true } } };
+            List<ExcelRow> ExcelRows = new List<ExcelRow>
+                {
+                new ExcelRow() { Index = 1,  Cells = ExcelCells1 },
+                new ExcelRow() { Index = 2},
+                };
+
+            ExcelHeader Header = new ExcelHeader()
+            {
+                HeaderRows = 2,
+                Rows = ExcelRows
+            };
+            ExportProperties.Header = Header;
+            DefaultGrid.ExcelExport(ExportProperties);
+        }
+        else if (Args.Item.Text == "Send Mail")
+        {
+            StaticDataSource.MailSendData =DefaultGrid.CurrentViewData.Cast<ExpandoObject>().ToList();
+            dialogService.Open<MailSender>("Send Mail", new Dictionary<string, object>() { { "MailSubject", chartdetails.Title } }, new DialogOptions() { Width = "70%", Height = "auto" });
+
+        }
+    }
+}

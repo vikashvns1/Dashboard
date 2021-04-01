@@ -1,0 +1,41 @@
+﻿@inject AuthenticationStateProvider authenticationStateProvider
+@inject NavigationManager  navigationManager
+
+@*<span style="color:white">Welcome @StaticDataSource.userInfo.Name </span> &nbsp;&nbsp;&nbsp; <span style="color:white">User Id @StaticDataSource.userInfo.UserId </span> &nbsp;&nbsp;&nbsp;*@
+@*<RadzenButton Text="Logout" Click="Logout" class="oi-account-logout" />*@ 
+<NavLink class="nav-link" href="Logout" @onclick="@(()=> Logout())">
+    <span class="oi oi-list-rich" aria-hidden="true" style="color:white"></span> <a href="#"  style="color:white">
+    Logout
+</a>
+</NavLink>
+
+@code {
+
+    void Logout()
+    {
+        //StaticDataSource.userInfo = null;
+        StaticDataSource.appConfiguration=null;
+        StaticDataSource.DynamicObject = null;
+        StaticDataSource.DtDynamic = null;
+        StaticDataSource.DtAppConfig = null;
+        StaticDataSource.ParamList = null;
+        StaticDataSource.Xml = null;
+        StaticDataSource.ConnString = null;
+        StaticDataSource.StoreProcedure = null;
+        StaticDataSource.Action = null;
+        StaticDataSource.Tital = null;
+        StaticDataSource.PopHeadarMsg = null;
+        StaticDataSource.PopMsg = null;
+        StaticDataSource.IsInitialRenderAppConfig = false;
+        StaticDataSource.IsInitialRenderChartConfig = false;
+        StaticDataSource.IsInitialRender = false;
+        StaticDataSource.IsInitialRenderGrid = false;
+        StaticDataSource.IsInitialRenderChart = false;
+        StaticDataSource.ChartDataObj = null;
+        StaticDataSource.ChartdataTable=null;
+        StaticDataSource.chartDataList = null;
+        StaticDataSource.chartAttributesList = null;
+
+        navigationManager.NavigateTo("/");
+    }
+}

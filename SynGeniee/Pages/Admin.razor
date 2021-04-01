@@ -1,0 +1,152 @@
+﻿@layout AdminLayout
+@page "/Admin"
+@inject NavigationManager urihelper;
+@using Microsoft.Extensions.Configuration
+@inject IConfiguration  _configuration
+@using DashBoardModel
+@inject Radzen.DialogService dialogService
+@inject NotificationService notificationService
+@inject TooltipService tooltipService
+@using Syncfusion.Blazor.Grids
+@using Syncfusion.Blazor.Data
+@using Syncfusion.Blazor.Buttons
+@using System.Collections.ObjectModel;
+
+@if (StaticDataSource.AdminData == null)
+{
+    <p><em>Loading....</em></p>
+    <RadzenProgressBar Mode="ProgressBarMode.Indeterminate"></RadzenProgressBar>
+}
+else
+{
+    <h2>User List</h2>
+    <SfGrid @ref="DefaultGrid" TValue="CompanyProfile" Height="@Height" RowHeight="30" AllowFiltering="true" DataSource="@(StaticDataSource.AdminData)" Toolbar="@(new List<string>() { "Add" })">
+        <GridEditSettings AllowAdding="true" AllowEditing="true" AllowDeleting="true" AllowEditOnDblClick="false">           
+        </GridEditSettings>
+        <GridFilterSettings Type="Syncfusion.Blazor.Grids.FilterType.Excel" ShowFilterBarStatus="true"></GridFilterSettings>
+        <GridEvents OnActionBegin="ActionBeginAsync" TValue="CompanyProfile"></GridEvents>
+        <GridColumns>
+            <GridColumn HeaderText="Manage Records" Width="150px" TextAlign="Syncfusion.Blazor.Grids.TextAlign.Center">
+                <GridCommandColumns>
+                    <GridCommandColumn Type="CommandButtonType.Edit" ButtonOption="@(new CommandButtonOptions() {IconCss="e-icons e-edit", CssClass="e-flat" })"></GridCommandColumn>
+                    <GridCommandColumn Type="CommandButtonType.Delete" ButtonOption="@(new CommandButtonOptions() {IconCss="e-icons e-delete", CssClass="e-flat" })"></GridCommandColumn>
+                    <GridCommandColumn Type="CommandButtonType.Save" ButtonOption="@(new CommandButtonOptions() {IconCss="e-icons e-save", CssClass="e-flat" })"></GridCommandColumn>
+                    <GridCommandColumn Type="CommandButtonType.Cancel" ButtonOption="@(new CommandButtonOptions() {IconCss="e-icons e-cancel-icon", CssClass="e-flat" })"></GridCommandColumn>
+                </GridCommandColumns>
+            </GridColumn>
+            <GridColumn Field=@nameof(CP.Id) AutoFit="true" EditorSettings="@EditParams" IsIdentity="true" IsPrimaryKey="true"></GridColumn>
+            <GridColumn Field=@nameof(CP.Name) AutoFit="true" ValidationRules="@(new ValidationRules{ Required= true })"></GridColumn>
+            <GridColumn Field=@nameof(CP.UserId) AutoFit="true" Type="ColumnType.String" ValidationRules="@(new ValidationRules{ Required= true })"></GridColumn>
+            <GridColumn Field=@nameof(CP.Password) AutoFit="true" Type="ColumnType.String" ValidationRules="@(new ValidationRules{ Required= true })" AllowFiltering="false"></GridColumn>
+            <GridColumn Field=@nameof(CP.Active) AutoFit="true" Context="data" Type="ColumnType.Boolean"></GridColumn>
+            <GridColumn Field=@nameof(CP.FromMail) AutoFit="true" Type="ColumnType.String"  AllowFiltering="false"></GridColumn>
+            <GridColumn Field=@nameof(CP.EmailPassword) AutoFit="true" Type="ColumnType.String" AllowFiltering="false"></GridColumn>
+            <GridColumn Field=@nameof(CP.Port) AutoFit="true" Type="ColumnType.Number" EditorSettings="@EditParams" AllowFiltering="false"></GridColumn>
+            <GridColumn Field=@nameof(CP.SmtpServer) AutoFit="true" Type="ColumnType.String" AllowFiltering="false"></GridColumn>
+            @*<GridColumn Field=@nameof(CP.ToMail) AutoFit="true" Type="ColumnType.String" ValidationRules="@(new ValidationRules{ Required= true })"></GridColumn>*@
+
+            <GridColumn Context="data" HeaderText="View/Create" AutoFit="true" TextAlign="Syncfusion.Blazor.Grids.TextAlign.Center" AllowEditing="false" AllowFiltering="false">
+                <Template>
+                    <SfButton CssClass="e-link" OnClick="@(args => navigatetoDetails((data as CompanyProfile).Id,"Db"))">DbConnection</SfButton>
+                </Template>
+            </GridColumn>
+            <GridColumn Context="data" HeaderText="View/Create" AutoFit="true" TextAlign="Syncfusion.Blazor.Grids.TextAlign.Center" AllowEditing="false" AllowFiltering="false">
+                <Template>
+                    <SfButton CssClass="e-link" OnClick="@(args => navigatetoDetails((data as CompanyProfile).Id,"Config"))">Configuration</SfButton>
+                </Template>
+            </GridColumn>
+            <GridColumn Context="data" HeaderText="View/Create" AutoFit="true" TextAlign="Syncfusion.Blazor.Grids.TextAlign.Center" AllowEditing="false" AllowFiltering="false">
+                <Template>
+                    <SfButton CssClass="e-link" OnClick="@(args => navigatetoDetails((data as CompanyProfile).Id,"Menu"))">Menu</SfButton>
+                </Template>
+            </GridColumn>
+
+        </GridColumns>
+    </SfGrid>
+}
+@code {
+    [Inject]
+    public IDynamicAPIService dynamicAPIService { get; set; }
+    int ActiveStatus = -1;
+    static string conn;
+    public CompanyProfile CP { get; set; }
+    public string Height = (StaticDataSource.WindowsHeight - 250) + "px";
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (StaticDataSource.IsInitialRenderAppConfig == false)
+        {
+            StaticDataSource.IsInitialRenderAppConfig = true;
+            conn = _configuration.GetConnectionString("DashBoardConnection");
+
+            string storeProc = "GetAllUserData";
+
+            var obj = await dynamicAPIService.GetAllAdminData(conn, storeProc);
+            ObservableCollection<CompanyProfile> _chartConfigurationList = new ObservableCollection<CompanyProfile>(obj);
+
+            StaticDataSource.AdminData = _chartConfigurationList;
+
+        }
+    }
+
+    void navigatetoDetails(int Id, string Option)
+    {
+        StaticDataSource.MenuItemList = null;
+        StaticDataSource.chartAttributesList = null;
+        StaticDataSource.DbConnectionList = null;
+        if (Option == "Config")
+            urihelper.NavigateTo("/ChartsConfigurationComponents/?Id=" + Id);
+        else if (Option == "Menu")
+            urihelper.NavigateTo("/MenuComponent/?Id=" + Id);
+        else
+            urihelper.NavigateTo("/DbConnectionComponent/?Id=" + Id);
+    }
+
+    void ShowTooltip(ElementReference elementReference, string content, TooltipOptions options = null) => tooltipService.Open(elementReference, content, options);
+
+    public SfGrid<CompanyProfile> DefaultGrid;
+    public async Task ActionBeginAsync(ActionEventArgs<CompanyProfile> args)
+    {
+        if (args.RequestType == Syncfusion.Blazor.Grids.Action.Save)
+        {
+            //args.Cancel = true;
+            int i = await dynamicAPIService.InsertEditCustomer(conn, args.Data);
+            var found = StaticDataSource.AdminData.FirstOrDefault(c => c.Id == args.Data.Id);
+
+            if (i == 0)
+            {
+                int index = StaticDataSource.AdminData.IndexOf(found);
+                StaticDataSource.AdminData[index] = args.Data;
+                notificationService.Notify(new NotificationMessage() { Severity = NotificationSeverity.Success, Summary = "User Updated ", Detail = $"User {args.Data.Name} with Id {args.Data.Id} has Updated Successfully.", Duration = 4000 });
+            }
+            else
+            {
+                args.Data.Id=i;
+
+                //StaticDataSource.AdminData.Add(data);
+                notificationService.Notify(new NotificationMessage() { Severity = NotificationSeverity.Success, Summary = "User Registered ", Detail = $"User {args.Data.Name} with Id {args.Data.Id} has beed added Successfully.", Duration = 4000 });
+            }
+            await DefaultGrid.CloseEdit();
+
+        }
+        else if (args.RequestType == Syncfusion.Blazor.Grids.Action.Delete)
+        {
+           // args.Cancel = true;
+            int i = await dynamicAPIService.DeleteUser(conn, args.Data.Id,"DeleteUser");
+            if (i == -1)
+            {
+                StaticDataSource.AdminData.Remove(args.Data);
+                notificationService.Notify(new NotificationMessage() { Severity = NotificationSeverity.Success, Summary = "User Deleted ", Detail = $"User {args.Data.Name} with Id {args.Data.Id} has Deleted Successfully.", Duration = 4000 });
+            }
+        }
+        await InvokeAsync(() =>
+        {
+            this.StateHasChanged();
+        });
+    }
+
+    public IEditorSettings EditParams = new NumericEditCellParams
+    {
+        Params = new Syncfusion.Blazor.Inputs.NumericTextBoxModel<object>() { ShowClearButton = true, ShowSpinButton = false }
+    };
+}

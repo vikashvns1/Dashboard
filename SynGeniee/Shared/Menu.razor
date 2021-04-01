@@ -1,0 +1,101 @@
+﻿@using System.Collections.ObjectModel;
+@using System.ComponentModel;
+@using System.Data;
+@using System.Dynamic;
+@using DashBoardModel;
+@using Newtonsoft.Json;
+
+<RadzenSidebar @ref="@sidebar0" @bind-Expanded="@sidebarExpanded" Style="background-color:#303EA0;margin-top:80px;">
+    <ChildContent>
+        <RadzenPanelMenu Style="background-color:#303EA0;margin-top:20px;" Click="@(arg=>MenuClicked(arg))">
+            <RadzenPanelMenuItem Text="Home" Path="/Home" Style="background-color:#303EA0;color:white;" Selected="false" />
+
+            @foreach (var mn in StaticDataSource.MenuItemList)
+            {
+                if (mn.Expand == true)
+                {
+                    string _pageName = string.IsNullOrEmpty(mn.PageName) ? "#" : mn.PageName;
+<RadzenPanelMenuItem Text="@mn.Menu" Style="background-color:#303EA0;color:white;">
+
+    @foreach (var mn1 in StaticDataSource.MenuItemList)
+    {
+@if (mn.Menu_id == mn1.Parentmenu_id)
+{@*@if (expandSubNav && mn.Menu_id == clickedMenu)
+        {*@
+
+
+                                        <RadzenPanelMenuItem Text="@mn1.Menu" Value="@mn1" Style="background-color:#303EA0;color:white;" />}}@*}*@
+                                    </RadzenPanelMenuItem> } @*else
+                                                             {
+                                     <RadzenPanelMenuItem Text="@mn.Menu" Value="@mn" Style="background-color:#303EA0;color:white;"/>
+                                    }*@}
+            <RadzenPanelMenuItem Text="Setting" Path="#" Style="background-color:#303EA0;color:white;" />
+        </RadzenPanelMenu>
+    </ChildContent>
+</RadzenSidebar>
+
+@code { [Parameter]
+    public RadzenSidebar sidebar0 { get; set; }
+    [Parameter]
+    public bool sidebarExpanded { get; set; }
+    [Inject]
+    public IDynamicAPIService DynamicAPIService { get; set; }
+@inject NavigationManager navigationManager
+private bool expandSubNav;
+    private int clickedMenu = 0;
+    private int prevClickedMenu = 0;
+
+    async Task MenuClicked(MenuItemEventArgs args)
+    {
+        if (args.Value != null)
+        {
+            var mn = args.Value as DashBoardModel.MenuItem;
+            StaticDataSource.MenuItem = null;
+            StaticDataSource.MenuItem = mn;
+            if (!string.IsNullOrEmpty(mn.PageName))
+            {
+                if (mn.PageName == "/ReportChart" || mn.PageName == "/ReportComponent")
+                {
+                    StaticDataSource.ComponentId = mn.ComponentId;
+                    GetRequestConfiguration Report = null;
+                    Report = StaticDataSource.chartAttributesList.OrderBy(a => a.ChartOrder).Where(a => a.ChartType == "Report" && a.Id == mn.ComponentId).FirstOrDefault();
+                    if (Report != null)
+                    {
+                        if (Report.TableData == null && Report.ColumnDataTable == null)
+                        {
+                            Param prm = new Param();
+                            prm.IsSp = 0;
+                            prm.QueryOrSp = Report.QueryOrSp;
+                            if (StaticDataSource.MenuItem.ProviderName.Trim() != "Excel")
+                            {
+                                string jsonstring = await DynamicAPIService.GetReportsData(StaticDataSource.MenuItem.ConnectionString, StaticDataSource.MenuItem.ProviderName, prm);
+                                Report.TableData = null;
+                                Report.ColumnDataTable = null;
+                                Report.TableData = JsonConvert.DeserializeObject<List<ExpandoObject>>(jsonstring);
+                                Report.ColumnDataTable = (DataTable)JsonConvert.DeserializeObject(jsonstring, (typeof(DataTable)));
+                            }
+                            else
+                            {
+                                var jsonstring = ExcelConnection.ConvertXSLXtoDataTable(StaticDataSource.MenuItem.ConnectionString,Report.QueryOrSp); //ExcelConnection.GetReport(StaticDataSource.MenuItem.ConnectionString);
+                                Report.TableData = null;
+                                Report.ColumnDataTable = null;
+                                Report.TableData = ExtensionMethods.ToDynamic(jsonstring);
+                                Report.ColumnDataTable = jsonstring;
+                            }
+                            navigationManager.NavigateTo(mn.PageName, true);
+                        }
+                        else
+                        {
+                            navigationManager.NavigateTo(mn.PageName, true);
+                        }
+                    }
+                }
+                else
+                {
+                    navigationManager.NavigateTo(mn.PageName, true);
+                }
+            }
+        }
+    }
+
+    }

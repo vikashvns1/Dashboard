@@ -1,0 +1,261 @@
+﻿@layout AdminLayout
+@page "/ChartsConfigurationComponents"
+@using Microsoft.AspNetCore.WebUtilities;
+@using Microsoft.Extensions.Configuration
+@inject NavigationManager urihelper;
+@inject IConfiguration  _configuration
+@using DashBoardModel
+@inject Radzen.DialogService dialogService
+@inject TooltipService tooltipService
+@inject NotificationService notificationService
+
+@if (StaticDataSource.chartAttributesList == null)
+{
+    <p><em>Loading....</em></p>
+    <RadzenProgressBar Mode="ProgressBarMode.Indeterminate"></RadzenProgressBar>
+}
+else
+{
+    <div style="width:100%">
+        <div class="row">
+            <div class="col-6 d-flex align-items-baseline ">
+                <h3>DashBoard Configurations </h3>
+            </div>
+            <div class="col-6 d-flex align-items-end justify-content-end">
+                <RadzenButton Icon="add" Text="Add New" Size="ButtonSize.Small" Click="@(args => dialogService.Open<AddEditChart>("Add New Configuration",
+                        new Dictionary<string, object>() { { "Id", 0 } },
+                        new DialogOptions(){ Width = "auto", Height = "auto" }))" />
+            </div>
+        </div>
+        <div class="row" style="margin:10px;overflow:auto">
+            <RadzenGrid AllowSorting="false" AllowFiltering="true" Data="@StaticDataSource.chartAttributesList" TItem="GetRequestConfiguration">
+                <Columns>
+                    <RadzenGridColumn TItem="GetRequestConfiguration" Context="data" Property="Id" Title="Id" Width="80px" Sortable="true">
+
+                    </RadzenGridColumn>
+
+                    <RadzenGridColumn TItem="GetRequestConfiguration" Context="data" Title="Query" Width="420px" Filterable="false">
+                        <Template>
+                            @{
+                                <RadzenLabel MouseEnter="@(args => ShowTooltip(args,data.QueryOrSp) )" Text="@data.QueryOrSp" Style="width:100%;" ReadOnly="true"></RadzenLabel>
+
+                                @*int i = (context as GetRequestConfiguration).IsSp;
+                                    string Query = (context as GetRequestConfiguration).QueryOrSp;
+
+                                    if (i == 0)
+                                    {
+                                        <RadzenTextArea ReadOnly="true" Value="@Query" Style="width: 400px;height:120px"></RadzenTextArea>
+                                    }
+                                    else
+                                    {
+                                        <RadzenGridColumn TItem="GetRequestConfiguration" Context="data" Property="QueryOrSp" Title="QueryOrSp" Width="120px">
+                                        </RadzenGridColumn>
+                                    }*@
+                            }
+                        </Template>
+                    </RadzenGridColumn>
+                    <RadzenGridColumn TItem="GetRequestConfiguration" Context="data" Title="IsQuery" Width="100px" Filterable="false">
+                        <Template>
+                            @{string QueryOrSp = data.IsSp == 1 ? "StoreProcedure" : "Query";}
+                            @QueryOrSp
+                        </Template>
+                    </RadzenGridColumn>
+                    <RadzenGridColumn TItem="GetRequestConfiguration" Context="data" Property="ChartType" Title="ChartType" Width="100px">
+
+                    </RadzenGridColumn>
+
+                    <RadzenGridColumn TItem="GetRequestConfiguration" Context="data" Property="ChartOrder" Title="ChartOrder" Width="100px" Filterable="false" Sortable="true">
+
+                    </RadzenGridColumn>
+                    <RadzenGridColumn TItem="GetRequestConfiguration" Context="data" Property="BlockPosition" Title="BlockPosition" Width="100px" Filterable="false">
+
+                    </RadzenGridColumn>
+
+                    <RadzenGridColumn TItem="GetRequestConfiguration" Context="data" Title="Active" Width="100px">
+                        <Template>
+                            @{string Active = data.Active == 1 ? "Active" : "Inactive";}
+                            @Active
+                        </Template>
+                    </RadzenGridColumn>
+
+
+                    <RadzenGridColumn TItem="GetRequestConfiguration" Context="data" Property="Title" Title="Title" Width="150px" Filterable="false">
+
+                    </RadzenGridColumn>
+                    <RadzenGridColumn TItem="GetRequestConfiguration" Context="data" Property="CardBgColor" Title="CardBgColor" Width="100px" Filterable="false">
+
+                    </RadzenGridColumn>
+                    <RadzenGridColumn TItem="GetRequestConfiguration" Context="data" Property="LegendPosition" Title="LegendPosition" Width="100px" Filterable="false">
+
+                    </RadzenGridColumn>
+                    <RadzenGridColumn TItem="GetRequestConfiguration" Context="data" Title="IsPopUpOpen" Width="100px" Filterable="false">
+                        <Template>
+                            @{string IsPopUpOpen = data.IsPopUpOpen == 1 ? "Allowed" : "Not Allowed";}
+                            @IsPopUpOpen
+                        </Template>
+                    </RadzenGridColumn>
+
+
+                    <RadzenGridColumn TItem="GetRequestConfiguration" Context="data" Property="XAxixDisplayName" Title="XAxixDisplayName" Width="100px" Filterable="false">
+
+                    </RadzenGridColumn>
+
+                    <RadzenGridColumn TItem="GetRequestConfiguration" Context="data" Property="YAxixDisplayName" Title="YAxixDisplayName" Width="100px" Filterable="false">
+
+                    </RadzenGridColumn>
+                    <RadzenGridColumn TItem="GetRequestConfiguration" Context="data" Title="IsFilterOn" Width="100px" Filterable="false">
+                        <Template>
+                            @{string IsFilterOn = data.IsFilterOn == 1 ? "Apply" : "Not Apply";}
+                            @IsFilterOn
+                        </Template>
+                    </RadzenGridColumn>
+                    <RadzenGridColumn TItem="GetRequestConfiguration" Context="data" Title="Xml" Width="420px">
+                        <Template>
+                            @{
+                                <RadzenLabel MouseEnter="@(args => ShowTooltip(args,data.Xml) )" Text="@data.Xml" Style="width:100%;" ReadOnly="true"></RadzenLabel>
+
+                                @*string Xml = (context as GetRequestConfiguration).Xml;
+                                    if (!string.IsNullOrEmpty(Xml))
+                                    {
+                                        <RadzenTextArea ReadOnly="true" Value="@Xml" Style="width: 400px;height:120px"></RadzenTextArea>
+                                    }
+                                    else
+                                    {
+                                        <RadzenTextArea ReadOnly="true" Value="NA"></RadzenTextArea>
+                                    }*@
+                            }
+                        </Template>
+                    </RadzenGridColumn>
+                    <RadzenGridColumn TItem="GetRequestConfiguration" Context="data" Property="ColorScheme" Title="ColorScheme" Width="100px" Filterable="false">
+
+                    </RadzenGridColumn>
+
+                    <RadzenGridColumn TItem="GetRequestConfiguration" Context="data" Property="XAxixValueColumnName" Title="XAxixValueColumnName" Width="100px" Filterable="false">
+
+                    </RadzenGridColumn>
+                    <RadzenGridColumn TItem="GetRequestConfiguration" Context="data" Property="YAxixValueColumnName1" Title="YAxixValueColumnName1" Width="100px" Filterable="false">
+
+                    </RadzenGridColumn>
+                    <RadzenGridColumn TItem="GetRequestConfiguration" Context="data" Property="YAxixValueColumnName2" Title="YAxixValueColumnName2" Width="100px" Filterable="false">
+
+                    </RadzenGridColumn>
+                    <RadzenGridColumn TItem="GetRequestConfiguration" Context="data" Property="YAxixValueColumnName3" Title="YAxixValueColumnName3" Width="100px" Filterable="false">
+
+                    </RadzenGridColumn>
+
+                    <RadzenGridColumn TItem="GetRequestConfiguration" Context="data" Property="YAxixValueColumnName4" Title="YAxixValueColumnName4" Width="100px" Filterable="false">
+
+                    </RadzenGridColumn>
+                    <RadzenGridColumn TItem="GetRequestConfiguration" Context="data" Property="YAxixValueColumnName5" Title="YAxixValueColumnName5" Width="100px" Filterable="false">
+
+                    </RadzenGridColumn>
+                    <RadzenGridColumn TItem="GetRequestConfiguration" Context="data" Property="Label1" Title="Label1" Width="100px" Filterable="false">
+
+
+                    </RadzenGridColumn>
+                    <RadzenGridColumn TItem="GetRequestConfiguration" Context="data" Property="Label2" Title="Label2" Width="100px" Filterable="false">
+
+                    </RadzenGridColumn>
+                    <RadzenGridColumn TItem="GetRequestConfiguration" Context="data" Property="Label3" Title="Label3" Width="100px" Filterable="false">
+
+                    </RadzenGridColumn>
+                    <RadzenGridColumn TItem="GetRequestConfiguration" Context="data" Property="Label4" Title="Label4" Width="100px" Filterable="false">
+
+                    </RadzenGridColumn>
+                    <RadzenGridColumn TItem="GetRequestConfiguration" Context="data" Property="Label5" Title="Label5" Width="100px" Filterable="false">
+
+                    </RadzenGridColumn>
+
+                    <RadzenGridColumn TItem="GetRequestConfiguration" Context="data" Property="LineType1" Title="LineType1" Width="100px" Filterable="false">
+
+                    </RadzenGridColumn>
+                    <RadzenGridColumn TItem="GetRequestConfiguration" Context="data" Property="LineType2" Title="LineType2" Width="100px" Filterable="false">
+
+                    </RadzenGridColumn>
+                    <RadzenGridColumn TItem="GetRequestConfiguration" Context="data" Property="LineType3" Title="LineType3" Width="100px" Filterable="false">
+
+                    </RadzenGridColumn>
+
+                    <RadzenGridColumn TItem="GetRequestConfiguration" Context="data" Property="LineType4" Title="LineType4" Width="100px" Filterable="false">
+
+                    </RadzenGridColumn>
+                    <RadzenGridColumn TItem="GetRequestConfiguration" Context="data" Property="LineType5" Title="LineType5" Width="100px" Filterable="false">
+
+                    </RadzenGridColumn>
+                    <RadzenGridColumn TItem="GetRequestConfiguration" Context="data" Property="MarkerType1" Title="MarkerType1" Width="100px" Filterable="false">
+
+                    </RadzenGridColumn>
+                    <RadzenGridColumn TItem="GetRequestConfiguration" Context="data" Property="MarkerType2" Title="MarkerType2" Width="100px" Filterable="false">
+
+                    </RadzenGridColumn>
+                    <RadzenGridColumn TItem="GetRequestConfiguration" Context="data" Property="MarkerType3" Title="MarkerType3" Width="100px" Filterable="false">
+
+                    </RadzenGridColumn>
+                    <RadzenGridColumn TItem="GetRequestConfiguration" Context="data" Property="MarkerType4" Title="MarkerType4" Width="100px" Filterable="false">
+
+                    </RadzenGridColumn>
+                    <RadzenGridColumn TItem="GetRequestConfiguration" Context="data" Property="MarkerType5" Title="MarkerType5" Width="100px" Filterable="false">
+
+                    </RadzenGridColumn>
+                    <RadzenGridColumn TItem="GetRequestConfiguration" Context="data" Title="Modification" Width="100px" Filterable="false">
+                        <Template>
+                            <RadzenButton Icon="edit" Size="ButtonSize.Medium" Click="@(args => dialogService.Open<AddEditChart>("Edit Chart Configuration",
+                        new Dictionary<string, object>() { { "Id", data.Id } },
+                        new DialogOptions(){ Width = "auto", Height = "auto" }))" />
+
+                        </Template>
+                    </RadzenGridColumn>
+
+                </Columns>
+            </RadzenGrid>
+        </div>
+    </div>
+}
+@code {
+    [Inject]
+    public IDynamicAPIService dynamicAPIService { get; set; }
+    [Inject]
+    public NavigationManager Nav { get; set; }
+    protected override async Task OnInitializedAsync()
+    {
+        System.Uri uri;
+        uri = Nav.ToAbsoluteUri(Nav.Uri);
+        if (QueryHelpers.ParseQuery(uri.Query).TryGetValue("Id", out var Id))
+        {
+            //int Id =Convert.ToInt32(Id);
+            dialogService.OnClose += Close;
+
+            string conn = _configuration.GetConnectionString("DashBoardConnection");
+            string storeProc = "GetConfiguration";
+
+            IEnumerable<GetRequestConfiguration> _chartConfigurationList = new List<GetRequestConfiguration>();
+            _chartConfigurationList = await dynamicAPIService.GetChartsConfiguration(conn, storeProc, Convert.ToInt32(Id));
+
+            StaticDataSource.chartAttributesList = _chartConfigurationList.ToList();// _chartConfigurationList.Where(a => a.Active == 1).ToList();
+
+            ChartsFeaturesList _ChartsFeaturesList = new ChartsFeaturesList();
+            _ChartsFeaturesList = await dynamicAPIService.GetChartsFeaturesData(conn);
+
+            StaticDataSource.ChartsFeaturesListData = _ChartsFeaturesList;
+            StaticDataSource.ChartTypeList = _ChartsFeaturesList.ChartTypeListData.ToList();
+            StaticDataSource.LegendPositionList = _ChartsFeaturesList.LegendPositionListData.ToList();
+            StaticDataSource.BlockPositionData = _ChartsFeaturesList.BlockPositionListData.ToList();
+            StaticDataSource.ColorSchemeList = _ChartsFeaturesList.ColorSchemeListData.ToList();
+            StaticDataSource.LineTypeList = _ChartsFeaturesList.LineTypListData.ToList();
+            StaticDataSource.MarkerTypeList = _ChartsFeaturesList.MarkerTypeListData.ToList();
+            StaticDataSource.CardBgColorList = _ChartsFeaturesList.CardBgColorListData.ToList();
+        }
+    }
+
+    void Close(dynamic result)
+    {
+        if (result != null)
+        {
+            StateHasChanged();
+            notificationService.Notify(new NotificationMessage() { Severity = NotificationSeverity.Success, Summary = "Add/Update ", Detail = result, Duration = 4000 });
+        }
+    }
+
+    void ShowTooltip(ElementReference elementReference, string content, TooltipOptions options = null) => tooltipService.Open(elementReference, content, options);
+
+}

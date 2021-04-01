@@ -1,0 +1,174 @@
+﻿@page "/Home"
+@layout MainLayout
+@using System.Collections.ObjectModel;
+@using System.ComponentModel;
+@using System.Data;
+@using System.Dynamic;
+@using DashBoardModel;
+@using Newtonsoft.Json;
+@using Microsoft.AspNetCore.Components;
+@using Microsoft.Extensions.Configuration;
+@using System;
+@using System.Collections.Generic;
+@using System.Linq;
+@using System.Threading.Tasks;
+
+@if (StaticDataSource.IsInitialRenderChartConfig == false)
+{
+    <div class="col-md-12 mt-3">
+        <h3><em>initializing application please wait </em></h3>
+        <Syncfusion.Blazor.ProgressBar.SfProgressBar Value="100"  ShowValue="false" Mode="ProgressBarMode.Indeterminate" Style="margin-bottom: 20px" />
+    </div>
+}
+else
+{
+<div class="row m-5 align-self-start">
+    @foreach (var mn1 in StaticDataSource.MenuItemList.Where(a => a.PageName == "/Index"))
+    {
+        if (!string.IsNullOrEmpty(mn1.PageName))
+        {
+            string Path = "/Images/" + mn1.ImageName;
+            <div class="col-4 pb-2 align-content-center">
+                <NavLink class="nav-link" href="@mn1.PageName" @onclick="() => GetIsClicked(mn1)">
+                    <div class="DashboarMenu" style="background-color:@mn1.Bgcolor;">
+                        @*<div class="row">
+                            <div class="col-12 align-self-center">*@
+                        @*<span aria-hidden="true" style="display: flex; justify-content: center;"></span>*@@mn1.Menu
+                        @*</div>*@
+                        @*<div class="col-6 align-self-center">
+                                <RadzenImage Path="@Path" Style="width:100%;height:100%;" />
+                            </div>*@
+                        @*</div>*@
+                    </div>
+                </NavLink>
+            </div>
+        }
+    }
+
+    <div class="col-4 pb-2 align-content-center">
+        <NavLink class="nav-link" href="#">
+            <div class="DashboarMenu">
+                <div class="row">
+                    @*<div class="col-12 align-self-center">
+                        Coming Soon
+                    </div>*@
+                    @*<div class="col-6 align-self-center">
+                            <RadzenImage Path="/Images/comingsoon.png" Style="width:100%;height:100%;" />
+                        </div>*@
+                </div>
+            </div>
+        </NavLink>
+    </div>
+    <div class="col-4 pb-2 align-content-center">
+        <NavLink class="nav-link" href="#">
+            <div class="DashboarMenu">
+                <div class="row">
+                    @*<div class="col-12 align-self-center">
+                        Coming Soon
+                    </div>*@
+                    @*<div class="col-6 align-self-center">
+                            <RadzenImage Path="/Images/comingsoon.png" Style="width:100%;height:100%;" />
+                        </div>*@
+                </div>
+            </div>
+        </NavLink>
+    </div>
+    <div class="col-4 pb-2 align-content-center">
+        <NavLink class="nav-link" href="#">
+            <div class="DashboarMenu">
+                <div class="row">
+                    @*<div class="col-12 align-self-center">
+                        Coming Soon
+                    </div>*@
+                    @*<div class="col-6 align-self-center">
+                            <RadzenImage Path="/Images/comingsoon.png" Style="width:100%;height:100%;" />
+                        </div>*@
+                </div>
+            </div>
+        </NavLink>
+    </div>
+    <!--<div class="col-3 pb-2 align-content-center">
+        <NavLink class="nav-link" href="#">
+            <div class="DashboarMenu">
+                <div class="row">-->
+                    @*<div class="col-12 align-self-center">
+                        Coming Soon
+                    </div>*@
+                    @*<div class="col-6 align-self-center">
+                            <RadzenImage Path="/Images/comingsoon.png" Style="width:100%;height:100%;" />
+                        </div>*@
+                <!--</div>
+            </div>
+        </NavLink>
+    </div>-->
+    <!--<div class="col-3 pb-2 align-content-center">
+        <NavLink class="nav-link" href="#">
+            <div class="DashboarMenu">
+                <div class="row">-->
+                    @*<div class="col-12 align-self-center">
+                        Coming Soon
+                    </div>*@
+                    @*<div class="col-6 align-self-center">
+                            <RadzenImage Path="/Images/comingsoon.png" Style="width:100%;height:100%;" />
+                        </div>*@
+                <!--</div>
+            </div>
+        </NavLink>
+    </div>-->
+</div>
+}
+
+@code {
+
+    [Inject]
+    public IDynamicAPIService dynamicAPIService { get; set; }
+    [Inject]
+    public IConfiguration _configuration { get; set; }
+    @inject NavigationManager navigationManager
+
+    public async Task GetIsClicked(DashBoardModel.MenuItem mn)
+    {
+        StaticDataSource.MenuItem = null;
+        StaticDataSource.MenuItem = mn;
+        if (!string.IsNullOrEmpty(mn.PageName))
+        {
+            if (mn.PageName == "/ReportChart" || mn.PageName == "/ReportComponent")
+            {
+                StaticDataSource.ComponentId = mn.ComponentId;
+                GetRequestConfiguration Report = null;
+                Report = StaticDataSource.chartAttributesList.OrderBy(a => a.ChartOrder).Where(a => a.ChartType == "Report" && a.Id == mn.ComponentId).FirstOrDefault();
+                if (Report != null)
+                {
+                    if (Report.TableData == null && Report.ColumnDataTable == null)
+                    {
+                        Param prm = new Param();
+                        prm.IsSp = 0;
+                        prm.QueryOrSp = Report.QueryOrSp;
+                        string jsonstring = await dynamicAPIService.GetReportsData(StaticDataSource.MenuItem.ConnectionString, StaticDataSource.MenuItem.ProviderName, prm);
+                        Report.TableData = null;
+                        Report.ColumnDataTable = null;
+                        Report.TableData = JsonConvert.DeserializeObject<List<ExpandoObject>>(jsonstring);
+                        Report.ColumnDataTable = (DataTable)JsonConvert.DeserializeObject(jsonstring, (typeof(DataTable)));
+                    }
+                }
+            }
+            navigationManager.NavigateTo(mn.PageName, true);
+        }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (StaticDataSource.IsInitialRenderChartConfig == false)
+        {
+            StaticDataSource.IsInitialRenderChartConfig = true;
+            string conn = _configuration.GetConnectionString("DashBoardConnection");
+            string storeProc = "GetConfiguration";
+
+            IEnumerable<GetRequestConfiguration> _chartConfigurationList = new List<GetRequestConfiguration>();
+            _chartConfigurationList = await dynamicAPIService.GetChartsConfiguration(conn, storeProc, StaticDataSource.userInfo.Id);
+
+            StaticDataSource.chartAttributesList = _chartConfigurationList.Where(a => a.Active == 1).ToList();
+            
+        }
+    }
+}

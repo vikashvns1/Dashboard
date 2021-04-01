@@ -1,0 +1,987 @@
+﻿@layout AdminLayout
+@page "/AddEditChart/{Id}"
+@using DashBoardModel
+@inject Radzen.DialogService dialogService
+@inject NavigationManager urihelper
+@using Microsoft.Extensions.Configuration
+@inject IConfiguration  _configuration
+
+<RadzenTemplateForm Data="@StaticDataSource.ModelChartRequest" Submit="@((PostRequestConfiguration args) => { Submit(args); })">
+    <div class="row">
+        <div class="col-md-12">
+            <RadzenTabs>
+                <Tabs>
+                    <RadzenTabsItem Text="Query/Store Procedure">
+                        <div class="row">
+                            <div class="col-md-12 align-items-center d-flex">
+                                <RadzenRadioButtonList TValue="int" Orientation="Radzen.Orientation.Horizontal" @bind-Value="@StaticDataSource.ModelChartRequest.IsSp">
+                                    <Items>
+                                        <RadzenRadioButtonListItem Text="Store Procedure" Value="1"></RadzenRadioButtonListItem>
+                                        <RadzenRadioButtonListItem Text="Query" Value="0"></RadzenRadioButtonListItem>
+                                    </Items>
+                                </RadzenRadioButtonList>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <RadzenLabel style="font-weight:bold" Text="Query/Store Procedure :" />
+                        </div>
+                        <div class="row p1">
+                            <RadzenTextArea @bind-Value="@StaticDataSource.ModelChartRequest.QueryOrSp" Placeholder="Write Query or Store Procedure name here." Style="height:180px;width:100%;"></RadzenTextArea>
+                        </div>
+                    </RadzenTabsItem>
+                    <RadzenTabsItem Text="Required DashBoard Configuration">
+                        <div class="row">
+                            <div class="col-6 p1">
+                                <table border="0" width="100%">
+                                    <tr>
+                                        <td align="left" width="50%">
+                                            <label>Chart Type : </label>
+                                        </td>
+                                        <td align="left" width="50%">
+                                            <RadzenDropDown @bind-Value="@StaticDataSource.ModelChartRequest.ChartType" Placeholder="Select Type" Data="@StaticDataSource.ChartTypeList" TValue="int" TextProperty="ChartType" ValueProperty="Id"></RadzenDropDown>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </div>
+                            <div class="col-6 p1">
+                                <table border="0" width="100%">
+                                    <!--<tr>
+        <td align="left" width="50%">-->
+                                    @* <label>Color Scheme : </label>*@
+                                    <!--</td>
+    <td align="left" width="50%">-->
+                                    @* <RadzenDropDown @bind-Value="@StaticDataSource.ModelChartRequest.ColorScheme" Placeholder="Select Color Scheme" Data="StaticDataSource.ColorSchemeList" TValue="int" TextProperty="ColorScheme" ValueProperty="Id"></RadzenDropDown>*@
+                                    <!--</td>
+    </tr>-->
+                                    <tr>
+                                        <td align="left" width="50%">
+                                            <label>Block Position : </label>
+                                        </td>
+                                        <td align="left" width="50%">
+                                            <RadzenDropDown @bind-Value="@StaticDataSource.ModelChartRequest.Position" Placeholder="Select Position" Data="StaticDataSource.BlockPositionData" TValue="int" TextProperty="BlockPosition" ValueProperty="Id"></RadzenDropDown>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-6 p1">
+                                <table border="0" width="100%">
+                                    <tr>
+                                        <td align="left" width="50%">
+                                         @*   <label>Legend Position : </label>*@
+                                        </td>
+                                        <td align="left" width="50%">
+                                         @*   <RadzenDropDown @bind-Value="@StaticDataSource.ModelChartRequest.LegendPosition" Placeholder="Select Legend " Data="StaticDataSource.LegendPositionList" TValue="int" TextProperty="LegendPosition" ValueProperty="Id"></RadzenDropDown>*@
+                                        </td>
+                                    </tr>
+                                </table>
+
+
+                            </div>
+                            <div class="col-6 p1">
+                                <table border="0" width="100%">
+                                    <tr>
+                                        <td align="left" width="50%">
+                                            <label>Block Position : </label>
+                                        </td>
+                                        <td align="left" width="50%">
+                                            <RadzenDropDown @bind-Value="@StaticDataSource.ModelChartRequest.Position" Placeholder="Select Position" Data="StaticDataSource.BlockPositionData" TValue="int" TextProperty="BlockPosition" ValueProperty="Id"></RadzenDropDown>
+                                        </td>
+                                    </tr>
+                                </table>
+
+
+                            </div>
+
+                        </div>
+                        <div class="row">
+                            <div class="col-6 p1">
+                                <table border="0" width="100%">
+                                    <tr>
+                                        <td align="left" width="50%">
+                                            <label>Chart Title : </label>
+                                        </td>
+                                        <td align="left" width="50%">
+                                            <RadzenTextBox @bind-Value="@StaticDataSource.ModelChartRequest.Title" Placeholder="Title Name"></RadzenTextBox>
+                                        </td>
+                                    </tr>
+                                </table>
+
+
+                            </div>
+                            <div class="col-6 p1">
+                                <table border="0" width="100%">
+                                    <tr>
+                                        <td align="left" width="50%">
+                                            <label>Chart Order : </label>
+                                        </td>
+                                        <td align="left" width="50%">
+                                            <RadzenNumeric Placeholder="Chart Order" TValue="int" @bind-Value="@StaticDataSource.ModelChartRequest.ChartOrder" Style="width:120px"></RadzenNumeric>
+                                        </td>
+                                    </tr>
+                                </table>
+
+
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-6 p1">
+                                <table border="0" width="100%">
+                                    <tr>
+                                        <td align="left" width="50%">
+                                            <label>X-Axis Title : </label>
+                                        </td>
+                                        <td align="left" width="50%">
+                                            <RadzenTextBox @bind-Value="@StaticDataSource.ModelChartRequest.XAxixDisplayName"></RadzenTextBox>
+                                        </td>
+                                    </tr>
+                                </table>
+
+                            </div>
+                            <div class="col-6 p1">
+                                <table border="0" width="100%">
+                                    <tr>
+                                        <td align="left" width="50%">
+                                            <label>Y-Axis Title :</label>
+                                        </td>
+                                        <td align="left" width="50%">
+                                            <RadzenTextBox @bind-Value="@StaticDataSource.ModelChartRequest.YAxixDisplayName"></RadzenTextBox>
+                                        </td>
+                                    </tr>
+                                </table>
+
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-6 p1">
+                                <table border="0" width="100%">
+                                    <tr>
+                                        <td align="left" width="50%">
+                                            <label>CardBgColor : </label>
+                                        </td>
+                                        <td align="left" width="50%">
+                                            <RadzenDropDown @bind-Value="@StaticDataSource.ModelChartRequest.CardBgColor" Placeholder="Select Color" Data="StaticDataSource.CardBgColorList" TValue="int" TextProperty="CardBgColor" ValueProperty="Id"></RadzenDropDown>
+                                        </td>
+                                    </tr>
+                                </table>
+
+                            </div>
+                            <div class="col-6 p1">
+                                <table border="0" width="100%">
+                                    <tr>
+                                        <td align="left" width="30%">
+                                            <label>Status :</label>
+                                        </td>
+                                        <td align="left" width="70%">
+                                            <RadzenRadioButtonList TValue="int" Visible="true" Orientation="Radzen.Orientation.Horizontal" @bind-Value="@StaticDataSource.ModelChartRequest.Active">
+                                                <Items>
+                                                    
+                                                    <RadzenRadioButtonListItem Text="Active" Value="1"></RadzenRadioButtonListItem>
+                                                    <RadzenRadioButtonListItem Text="Inactive" Value="0"></RadzenRadioButtonListItem>
+                                                </Items>
+                                            </RadzenRadioButtonList>
+                                        </td>
+                                    </tr>
+                                </table>
+
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-6 p1">
+                                <table border="0" width="100%">
+                                    <tr>
+                                        <td align="left" width="50%">
+                                            <label>PopUp :</label>
+                                        </td>
+                                        <td align="left" width="50%">
+                                            <RadzenRadioButtonList TValue="int" Visible="true" Orientation="Radzen.Orientation.Horizontal" @bind-Value="@StaticDataSource.ModelChartRequest.IsPopUpOpen">
+                                                <Items>
+                                                    <RadzenRadioButtonListItem Text="Yes" Value="1"></RadzenRadioButtonListItem>
+                                                    <RadzenRadioButtonListItem Text="No" Value="0"></RadzenRadioButtonListItem>
+                                                </Items>
+                                            </RadzenRadioButtonList>
+                                        </td>
+                                    </tr>
+
+                                </table>
+
+                            </div>
+                            <div class="col-6 p1">
+                                <table border="0" width="100%">
+                                    <tr>
+                                        <td align="left" width="50%">
+                                            <label>Filter Control :</label>
+                                        </td>
+                                        <td align="left" width="50%">
+                                            <RadzenRadioButtonList TValue="int" Visible="true" Orientation="Radzen.Orientation.Horizontal" @bind-Value="@StaticDataSource.ModelChartRequest.IsFilterOn">
+                                                <Items>
+                                                    <RadzenRadioButtonListItem Text="Yes" Value="1"></RadzenRadioButtonListItem>
+                                                    <RadzenRadioButtonListItem Text="No" Value="0"></RadzenRadioButtonListItem>
+                                                </Items>
+                                            </RadzenRadioButtonList>
+                                        </td>
+                                    </tr>
+                                </table>
+
+                            </div>
+                        </div>
+
+                    </RadzenTabsItem>
+                    <RadzenTabsItem Text="Attributes">
+                        <div class="row">
+                            <div class="col-6 p1">
+                                <table border="0" width="100%">
+                                    <tr>
+                                        <td align="left" width="50%">
+                                            <label>X-Axis-Column : </label>
+                                        </td>
+                                        <td align="left" width="50%">
+                                            <RadzenTextBox @bind-Value="@StaticDataSource.ModelChartRequest.XAxixValueColumnName"></RadzenTextBox>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </div>
+                            <div class="col-6 p1">
+                                <table border="0" width="100%">
+                                    <tr>
+                                        <td align="left" width="50%">
+                                            <label>FormatString : </label>
+                                        </td>
+                                        <td align="left" width="50%">
+                                            <RadzenTextBox @bind-Value="@StaticDataSource.ModelChartRequest.FormateString"></RadzenTextBox>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-6 p1">
+                                <table border="0" width="100%">
+                                    <tr>
+                                        <td align="left" width="50%">
+                                            <label>Y-Axis-Coulmn1 : </label>
+                                        </td>
+                                        <td align="left" width="50%">
+                                            <RadzenTextBox @bind-Value="@StaticDataSource.ModelChartRequest.YAxixValueColumnName1"></RadzenTextBox>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </div>
+                            <div class="col-6 p1">
+                                <table border="0" width="100%">
+                                    <tr>
+                                        <td align="left" width="50%">
+                                            <label>Lable-1 : </label>
+                                        </td>
+                                        <td align="left" width="50%">
+                                            <RadzenTextBox @bind-Value="@StaticDataSource.ModelChartRequest.Label1"></RadzenTextBox>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-6 p1">
+                                <table border="0" width="100%">
+                                    <tr>
+                                        <td align="left" width="50%">
+                                            <label>Y-Axis-Coulmn2 : </label>
+                                        </td>
+                                        <td align="left" width="50%">
+                                            <RadzenTextBox @bind-Value="@StaticDataSource.ModelChartRequest.YAxixValueColumnName2"></RadzenTextBox>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </div>
+                            <div class="col-6 p1">
+                                <table border="0" width="100%">
+                                    <tr>
+                                        <td align="left" width="50%">
+                                            <label>Lable-2 : </label>
+                                        </td>
+                                        <td align="left" width="50%">
+                                            <RadzenTextBox @bind-Value="@StaticDataSource.ModelChartRequest.Label2"></RadzenTextBox>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-6 p1">
+                                <table border="0" width="100%">
+                                    <tr>
+                                        <td align="left" width="50%">
+                                            <label>Y-Axis-Coulmn3 : </label>
+                                        </td>
+                                        <td align="left" width="50%">
+                                            <RadzenTextBox @bind-Value="@StaticDataSource.ModelChartRequest.YAxixValueColumnName3"></RadzenTextBox>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </div>
+                            <div class="col-6 p1">
+                                <table border="0" width="100%">
+                                    <tr>
+                                        <td align="left" width="50%">
+                                            <label>Lable-3 : </label>
+                                        </td>
+                                        <td align="left" width="50%">
+                                            <RadzenTextBox @bind-Value="@StaticDataSource.ModelChartRequest.Label3"></RadzenTextBox>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-6 p1">
+                                <table border="0" width="100%">
+                                    <tr>
+                                        <td align="left" width="50%">
+                                            <label>Y-Axis-Coulmn4 : </label>
+                                        </td>
+                                        <td align="left" width="50%">
+                                            <RadzenTextBox @bind-Value="@StaticDataSource.ModelChartRequest.YAxixValueColumnName4"></RadzenTextBox>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </div>
+                            <div class="col-6 p1">
+                                <table border="0" width="100%">
+                                    <tr>
+                                        <td align="left" width="50%">
+                                            <label>Lable-4 : </label>
+                                        </td>
+                                        <td align="left" width="50%">
+                                            <RadzenTextBox @bind-Value="@StaticDataSource.ModelChartRequest.Label4"></RadzenTextBox>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-6 p1">
+                                <table border="0" width="100%">
+                                    <tr>
+                                        <td align="left" width="50%">
+                                            <label>Y-Axis-Coulmn5 : </label>
+                                        </td>
+                                        <td align="left" width="50%">
+                                            <RadzenTextBox @bind-Value="@StaticDataSource.ModelChartRequest.YAxixValueColumnName5"></RadzenTextBox>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </div>
+                            <div class="col-6 p1">
+                                <table border="0" width="100%">
+                                    <tr>
+                                        <td align="left" width="50%">
+                                            <label>Lable-5 : </label>
+                                        </td>
+                                        <td align="left" width="50%">
+                                            <RadzenTextBox @bind-Value="@StaticDataSource.ModelChartRequest.Label5"></RadzenTextBox>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </div>
+                    </RadzenTabsItem>
+                    <RadzenTabsItem Text="Legend">
+                        <div class="row">
+                            <div class="col-6 p1">
+                                <table border="0" width="100%">
+                                    <tr>
+                                        <td align="left" width="50%">
+                                            <label>Orientation : </label>
+                                        </td>
+                                        <td align="left" width="50%">
+                                            <RadzenDropDown @bind-Value="@StaticDataSource.ModelChartRequest.LineType1" Placeholder="Select Orientation" Data="@_Orientation"></RadzenDropDown>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </div>
+                            <div class="col-6 p1">
+                                <table border="0" width="100%">
+                                    <tr>
+                                        <td align="left" width="50%">
+                                            <label>RelativePosition : </label>
+                                        </td>
+                                        <td align="left" width="50%">
+                                            <RadzenDropDown @bind-Value="@StaticDataSource.ModelChartRequest.MarkerType1" Placeholder="Select RelativePosition" Data="@_RelativePosition"></RadzenDropDown>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-6 p1">
+                                <table border="0" width="100%">
+                                    <tr>
+                                        <td align="left" width="50%">
+                                            <label>HorizontalAlignment : </label>
+                                        </td>
+                                        <td align="left" width="50%">
+                                            <RadzenDropDown @bind-Value="@StaticDataSource.ModelChartRequest.MarkerType1" TValue="int" Data="@_HorizontalAlignment"></RadzenDropDown>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </div>
+                            <div class="col-6 p1">
+                                <table border="0" width="100%">
+                                    <tr>
+                                        <td align="left" width="50%">
+                                            <label>VerticalEdge : </label>
+                                        </td>
+                                        <td align="left" width="50%">
+                                            <RadzenDropDown @bind-Value="@StaticDataSource.ModelChartRequest.MarkerType1"  Data="@_VerticalEdge"></RadzenDropDown>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-6 p1">
+                                <table border="0" width="100%">
+                                    <tr>
+                                        <td align="left" width="50%">
+                                            <label>AllowToggleSeries : </label>
+                                        </td>
+                                        <td align="left" width="50%">
+                                            <RadzenRadioButtonList TValue="int" Visible="true" Orientation="Radzen.Orientation.Horizontal" @bind-Value="@StaticDataSource.ModelChartRequest.Active">
+                                                <Items>
+
+                                                    <RadzenRadioButtonListItem Text="false" Value="0"></RadzenRadioButtonListItem>
+                                                    <RadzenRadioButtonListItem Text="true" Value="1"></RadzenRadioButtonListItem>
+                                                </Items>
+                                            </RadzenRadioButtonList>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </div>
+                            <div class="col-6 p1">
+                                <table border="0" width="100%">
+                                    <tr>
+                                        <td align="left" width="50%">
+                                            <label>Visible : </label>
+                                        </td>
+                                        <td align="left" width="50%">
+                                            <RadzenRadioButtonList TValue="int"  Visible="true" Orientation="Radzen.Orientation.Horizontal" @bind-Value="@StaticDataSource.ModelChartRequest.Active">
+                                                <Items>
+                                                    <RadzenRadioButtonListItem Text="false" Value="0" ></RadzenRadioButtonListItem>
+                                                    <RadzenRadioButtonListItem Text="true" Value="1"></RadzenRadioButtonListItem>
+                                                </Items>
+                                            </RadzenRadioButtonList>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </div>
+                        @*<div class="row">
+                            <div class="col-6 p1">
+                                <table border="0" width="100%">
+                                    <tr>
+                                        <td align="left" width="50%">
+                                            <label>LineType4 : </label>
+                                        </td>
+                                        <td align="left" width="50%">
+                                            <RadzenDropDown @bind-Value="@StaticDataSource.ModelChartRequest.LineType4" Placeholder="Select LineType" Data="StaticDataSource.LineTypeList" TValue="int" TextProperty="LineType" ValueProperty="Id"></RadzenDropDown>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </div>
+                            <div class="col-6 p1">
+                                <table border="0" width="100%">
+                                    <tr>
+                                        <td align="left" width="50%">
+                                            <label>MarkerType4 : </label>
+                                        </td>
+                                        <td align="left" width="50%">
+                                            <RadzenDropDown @bind-Value="@StaticDataSource.ModelChartRequest.MarkerType4" Placeholder="Select MarkerType" Data="StaticDataSource.MarkerTypeList" TValue="int" TextProperty="MarkerType" ValueProperty="Id"></RadzenDropDown>
+                                        </td>
+                                    </tr>
+                                </table>
+
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-6 p1">
+                                <table border="0" width="100%">
+                                    <tr>
+                                        <td align="left" width="50%">
+                                            <label>LineType5 : </label>
+                                        </td>
+                                        <td align="left" width="50%">
+                                            <RadzenDropDown @bind-Value="@StaticDataSource.ModelChartRequest.LineType5" Placeholder="Select LineType" Data="StaticDataSource.LineTypeList" TValue="int" TextProperty="LineType" ValueProperty="Id"></RadzenDropDown>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </div>
+                            <div class="col-6 p1">
+                                <table border="0" width="100%">
+                                    <tr>
+                                        <td align="left" width="50%">
+                                            <label>MarkerType5 : </label>
+                                        </td>
+                                        <td align="left" width="50%">
+                                            <RadzenDropDown @bind-Value="@StaticDataSource.ModelChartRequest.MarkerType5" Placeholder="Select MarkerType" Data="StaticDataSource.MarkerTypeList" TValue="int" TextProperty="MarkerType" ValueProperty="Id"></RadzenDropDown>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </div>*@
+                    </RadzenTabsItem>
+                    <RadzenTabsItem Text="Filter Control">
+                        <div class="row">
+                            <div class="col-12 p2">
+                                <table border="0" width="100%">
+                                    <tr>
+                                        <td align="left" width="30%">
+                                            <label>Filter Control : </label>
+                                        </td>
+                                        <td align="left" width="70%">
+                                            <RadzenDropDown Placeholder="Select Filter Control" Data="@filterdata" @bind-Value="@filterValue" TValue="string" Style="width:350px;" Change=@((args) => FilterControlTypeDropDownChanged())></RadzenDropDown>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </div>
+                        <div class="row" style="display:@_display1;">
+                            <div class="col-12 p2">
+                                <table border="0" width="100%">
+                                    <tr>
+                                        <td align="left" width="25%">
+                                            <label>Place Holder Name: </label>
+                                        </td>
+                                        <td align="left" width="25%">
+                                            <RadzenTextBox @bind-Value="@PlaceHolderName"></RadzenTextBox>
+                                        </td>
+                                        <td align="right" width="25%">
+                                            <label>Position: </label>
+                                        </td>
+                                        <td align="right" width="25%">
+                                            <RadzenTextBox @bind-Value="@Position"></RadzenTextBox>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </div>
+                        <div class="row" style="display:@_display2;">
+                            <div class="col-12 p2">
+                                <table border="0" width="100%">
+                                    <tr>
+                                        <td align="left" width="25%">
+                                            <label>Place Holder Name : </label>
+                                        </td>
+                                        <td align="left" width="25%">
+                                            <RadzenTextBox @bind-Value="@PlaceHolderName"></RadzenTextBox>
+                                        </td>
+                                        <td align="right" width="25%">
+                                            <label>Position: </label>
+                                        </td>
+                                        <td align="right" width="25%">
+                                            <RadzenTextBox @bind-Value="@Position"></RadzenTextBox>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td align="left" width="20%">Query</td>
+                                        <td width="80%" colspan="3">
+                                            <RadzenTextArea @bind-Value="@Query" Placeholder="Write Query or Store Procedure name here." Style="height:100px;width:90%;"></RadzenTextArea>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td align="left" width="25%">
+                                            <label>X-Axix Value: </label>
+                                        </td>
+                                        <td align="left" width="25%">
+                                            <RadzenTextBox @bind-Value="@XValue"></RadzenTextBox>
+                                        </td>
+                                        <td align="right" width="25%">
+                                            <label>Y-Axix Value: </label>
+                                        </td>
+                                        <td align="right" width="25%">
+                                            <RadzenTextBox @bind-Value="@YValue"></RadzenTextBox>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td colspan="4" align="left">
+                                            <label>Query parameter : </label> <RadzenTextBox @bind-Value="@parameter"></RadzenTextBox>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </div>
+                        <div class="row" style="display:@_display3;">
+                            <div class="col-12 p2">
+                                <table border="0" width="100%">
+                                    <tr>
+                                        <td align="left" width="25%">
+                                            <label>Place Holder Name : </label>
+                                        </td>
+                                        <td align="left" width="25%">
+                                            <RadzenTextBox @bind-Value="@PlaceHolderName"></RadzenTextBox>
+                                        </td>
+                                        <td align="right" width="25%">
+                                            <label>Position: </label>
+                                        </td>
+                                        <td align="right" width="25%">
+                                            <RadzenTextBox @bind-Value="@Position"></RadzenTextBox>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td align="left" width="20%">Query</td>
+                                        <td width="80%" colspan="3">
+                                            <RadzenTextArea @bind-Value="@Query" Placeholder="Write Query or Store Procedure name here." Style="height:100px;width:90%;"></RadzenTextArea>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td align="left" width="25%">
+                                            <label>X-Axix Value: </label>
+                                        </td>
+                                        <td align="left" width="25%">
+                                            <RadzenTextBox @bind-Value="@XValue"></RadzenTextBox>
+                                        </td>
+                                        <td align="right" width="25%">
+                                            <label>Y-Axix Value: </label>
+                                        </td>
+                                        <td align="right" width="25%">
+                                            <RadzenTextBox @bind-Value="@YValue"></RadzenTextBox>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td colspan="4" align="left">
+                                            <label>Query parameter : </label> <RadzenTextBox @bind-Value="@parameter"></RadzenTextBox>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td colspan="4" align="left">
+                                            <label>Sp Name/Query: </label> <RadzenTextBox @bind-Value="@Sp"></RadzenTextBox>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td align="left" width="25%">
+                                            <label>Ddl Data: </label>
+                                        </td>
+                                        <td align="left" width="25%">
+                                            <RadzenTextBox @bind-Value="@DdlData"></RadzenTextBox>
+                                        </td>
+                                        <td align="right" width="25%">
+                                            <label>Ddl Value: </label>
+                                        </td>
+                                        <td align="right" width="25%">
+                                            <RadzenTextBox @bind-Value="@DdlValue"></RadzenTextBox>
+                                        </td>
+                                    </tr>
+
+                                </table>
+                            </div>
+                        </div>
+                        <div class="row" style="display:@_display5;">
+                            <div class="col-12 p2">
+                                <table border="0" width="100%">
+                                    <tr>
+                                        <td align="right">
+                                            <RadzenButton ButtonType="ButtonType.Reset" Text="Reset" ButtonStyle="ButtonStyle.Primary"></RadzenButton>
+                                            <RadzenButton ButtonType="ButtonType.Submit" Text="Create Xml" Click="@((args) => CreateXml())"></RadzenButton>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-12 p2 align-content-end">
+                                <RadzenButton ButtonType="ButtonType.Reset" Text="Reset" ButtonStyle="ButtonStyle.Primary"></RadzenButton>
+                                <RadzenButton ButtonType="ButtonType.Submit" Text="Add"></RadzenButton>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-12 p2">
+
+                                <RadzenFieldset Text="XML">
+                                    <div class="row p1">
+                                        <RadzenTextArea ReadOnly="true" @bind-Value="@_Xml" Placeholder="Write Query or Store Procedure name here." Style="height:150px;width:100%;"></RadzenTextArea>
+                                    </div>
+                                </RadzenFieldset>
+                            </div>
+                        </div>
+
+                    </RadzenTabsItem>
+
+                </Tabs>
+            </RadzenTabs>
+        </div>
+    </div>
+    <div class="row justify-content-center">
+        <div class="col-md-12 d-flex align-items-end justify-content-center" style="margin-top: 16px;">
+            <RadzenButton ButtonType="ButtonType.Submit" Icon="save" Text="Save" />
+            <RadzenButton ButtonStyle="ButtonStyle.Light" Icon="cancel" style="display: inline-block; margin-left: 10px;" Text="Cancel" Click="@Cancel" />
+        </div>
+    </div>
+</RadzenTemplateForm>
+@code {
+
+    IEnumerable<ChartSeriesType> ChartSeriesTypes = Enum.GetValues(typeof(ChartSeriesType)).Cast<ChartSeriesType>();
+    ChartSeriesType ChartSeriesTyp;
+    IEnumerable<DevExpress.Blazor.Orientation> _Orientation = Enum.GetValues(typeof(DevExpress.Blazor.Orientation)).Cast<DevExpress.Blazor.Orientation>();
+    IEnumerable<RelativePosition> _RelativePosition = Enum.GetValues(typeof(RelativePosition)).Cast<RelativePosition>();
+    IEnumerable<HorizontalAlignment> _HorizontalAlignment = Enum.GetValues(typeof(HorizontalAlignment)).Cast<HorizontalAlignment>();
+    IEnumerable<VerticalEdge> _VerticalEdge = Enum.GetValues(typeof(VerticalEdge)).Cast<VerticalEdge>();
+    bool _AllowToggleSeries;
+    bool _Visible;
+
+    [Inject]
+    public IDynamicAPIService dynamicAPIService { get; set; }
+
+    [Parameter]
+    public int Id { get; set; }
+
+    //PostRequestConfiguration ModelChartRequest= new PostRequestConfiguration();
+
+    bool isBusy = false;
+    string message = string.Empty;
+    AlertMessageType messageType = AlertMessageType.Success;
+
+    List<string> filterdata = new List<string>(new string[] { "DropDown with Multiple Selection", "DropDown With Same X-Axix Values", "DropDown With Diffrent Values", "Date Range" });
+    string _display1 = "none";
+    string _display2 = "none";
+    string _display3 = "none";
+    string _display4 = "none";
+    string _display5 = "none";
+
+    string filterValue = string.Empty;
+    string Position = string.Empty;
+    string PlaceHolderName = string.Empty;
+    string Query = string.Empty;
+    string parameter = string.Empty;
+    string XValue = string.Empty;
+    string YValue = string.Empty;
+    string Sp = string.Empty;
+    string DdlValue = string.Empty;
+    string DdlData = string.Empty;
+    string Xml1 = string.Empty;
+    string _Xml = string.Empty;
+    protected override async Task OnInitializedAsync()
+    {
+        if (Id == 0)
+            return;
+        GetRequestConfiguration GetChartRequest = Id >= 0 ? StaticDataSource.chartAttributesList.Where(a => a.Id == Id).FirstOrDefault() : null;
+
+        StaticDataSource.ModelChartRequest.Id = GetChartRequest.Id;
+        StaticDataSource.ModelChartRequest.IsSp = GetChartRequest.IsSp;
+        StaticDataSource.ModelChartRequest.IsPopUpOpen = GetChartRequest.IsPopUpOpen;
+        StaticDataSource.ModelChartRequest.IsFilterOn = GetChartRequest.IsFilterOn;
+        // StaticDataSource.ModelChartRequest.IsChartGridLineOn = GetChartRequest.IsChartGridLineOn;
+        StaticDataSource.ModelChartRequest.Active = GetChartRequest.Active;
+        StaticDataSource.ModelChartRequest.QueryOrSp = GetChartRequest.QueryOrSp;
+        StaticDataSource.ModelChartRequest.Xml = !string.IsNullOrEmpty(GetChartRequest.Xml) ? GetChartRequest.Xml : null;
+        StaticDataSource.ModelChartRequest.XAxixDisplayName = GetChartRequest.XAxixDisplayName;
+        StaticDataSource.ModelChartRequest.XAxixValueColumnName = GetChartRequest.XAxixValueColumnName;
+        StaticDataSource.ModelChartRequest.YAxixDisplayName = GetChartRequest.YAxixDisplayName;
+        StaticDataSource.ModelChartRequest.YAxixValueColumnName1 = GetChartRequest.YAxixValueColumnName1;
+        StaticDataSource.ModelChartRequest.YAxixValueColumnName2 = GetChartRequest.YAxixValueColumnName2;
+        StaticDataSource.ModelChartRequest.YAxixValueColumnName3 = GetChartRequest.YAxixValueColumnName3;
+        StaticDataSource.ModelChartRequest.YAxixValueColumnName4 = GetChartRequest.YAxixValueColumnName4;
+        StaticDataSource.ModelChartRequest.YAxixValueColumnName5 = GetChartRequest.YAxixValueColumnName5;
+        StaticDataSource.ModelChartRequest.Label1 = GetChartRequest.Label1;
+        StaticDataSource.ModelChartRequest.Label2 = GetChartRequest.Label2;
+        StaticDataSource.ModelChartRequest.Label3 = GetChartRequest.Label3;
+        StaticDataSource.ModelChartRequest.Label4 = GetChartRequest.Label4;
+        StaticDataSource.ModelChartRequest.Label5 = GetChartRequest.Label5;
+        StaticDataSource.ModelChartRequest.ChartOrder = GetChartRequest.ChartOrder;
+
+        int chartype = StaticDataSource.ChartTypeList.Where(a => a.ChartType.Trim() == GetChartRequest.ChartType.Trim()).Select(a => a.Id).First();
+        int Legend = StaticDataSource.LegendPositionList.Where(a => a.LegendPosition.Trim() == GetChartRequest.LegendPosition.Trim()).Select(a => a.Id).FirstOrDefault();
+        int Position = StaticDataSource.BlockPositionData.Where(a => a.BlockPosition.Trim() == GetChartRequest.BlockPosition.Trim()).Select(a => a.Id).FirstOrDefault();
+        int Color = StaticDataSource.ColorSchemeList.Where(a => a.ColorScheme.Trim() == GetChartRequest.ColorScheme.Trim()).Select(a => a.Id).FirstOrDefault();
+        int BgColor = StaticDataSource.CardBgColorList.Where(a => a.CardBgColor.Trim() == GetChartRequest.CardBgColor.Trim()).Select(a => a.Id).FirstOrDefault();
+        int Linetype1 = StaticDataSource.LineTypeList.Where(a => a.LineType == GetChartRequest.LineType1).Select(a => a.Id).FirstOrDefault();
+        int Markertype1 = StaticDataSource.MarkerTypeList.Where(a => a.MarkerType == GetChartRequest.MarkerType1).Select(a => a.Id).FirstOrDefault();
+        int Linetype2 = StaticDataSource.LineTypeList.Where(a => a.LineType == GetChartRequest.LineType2).Select(a => a.Id).FirstOrDefault();
+        int Markertype2 = StaticDataSource.MarkerTypeList.Where(a => a.MarkerType == GetChartRequest.MarkerType2).Select(a => a.Id).FirstOrDefault();
+        int Linetype3 = StaticDataSource.LineTypeList.Where(a => a.LineType == GetChartRequest.LineType3).Select(a => a.Id).FirstOrDefault();
+        int Markertype3 = StaticDataSource.MarkerTypeList.Where(a => a.MarkerType == GetChartRequest.MarkerType3).Select(a => a.Id).FirstOrDefault();
+        int Linetype4 = StaticDataSource.LineTypeList.Where(a => a.LineType == GetChartRequest.LineType4).Select(a => a.Id).FirstOrDefault();
+        int Markertype4 = StaticDataSource.MarkerTypeList.Where(a => a.MarkerType == GetChartRequest.MarkerType4).Select(a => a.Id).FirstOrDefault();
+        int Linetype5 = StaticDataSource.LineTypeList.Where(a => a.LineType == GetChartRequest.LineType5).Select(a => a.Id).FirstOrDefault();
+        int Markertype5 = StaticDataSource.MarkerTypeList.Where(a => a.MarkerType == GetChartRequest.MarkerType5).Select(a => a.Id).FirstOrDefault();
+        StaticDataSource.ModelChartRequest.ChartType = chartype;//== 0 ? 1 : chartype;
+        StaticDataSource.ModelChartRequest.LegendPosition = Legend;//== 0 ? 1 : Legend;
+        StaticDataSource.ModelChartRequest.Position = Position;//== 0 ? 1 : Position;
+        StaticDataSource.ModelChartRequest.CardBgColor = BgColor;//== 0 ? 1 : BgColor;
+        StaticDataSource.ModelChartRequest.LineType1 = Linetype1;//== 0 ? 1 : Linetype1;
+        StaticDataSource.ModelChartRequest.LineType2 = Linetype2;//== 0 ? 1 : Linetype2;
+        StaticDataSource.ModelChartRequest.LineType3 = Linetype3;//== 0 ? 1 : Linetype3;
+        StaticDataSource.ModelChartRequest.LineType4 = Linetype4;//== 0 ? 1 : Linetype4;
+        StaticDataSource.ModelChartRequest.LineType5 = Linetype5;//== 0 ? 1 : Linetype5;
+        StaticDataSource.ModelChartRequest.MarkerType1 = Markertype1;//== 0 ? 1 : Markertype1;
+        StaticDataSource.ModelChartRequest.MarkerType2 = Markertype2;//== 0 ? 1 : Markertype2;
+        StaticDataSource.ModelChartRequest.MarkerType3 = Markertype3;//== 0 ? 1 : Markertype3;
+        StaticDataSource.ModelChartRequest.MarkerType4 = Markertype4;//== 0 ? 1 : Markertype4;
+        StaticDataSource.ModelChartRequest.MarkerType5 = Markertype5;//== 0 ? 1 : Markertype5;
+    }
+
+    void FilterControlTypeDropDownChanged()
+    {
+        Position = string.Empty;
+        PlaceHolderName = string.Empty;
+        Query = string.Empty;
+        parameter = string.Empty;
+        XValue = string.Empty;
+        YValue = string.Empty;
+        Sp = string.Empty;
+        DdlValue = string.Empty;
+        DdlData = string.Empty;
+        Xml1 = string.Empty;
+
+        if (filterValue == "DropDown with Multiple Selection")
+        {
+            _display1 = "block";
+            _display2 = "none";
+            _display3 = "none";
+            _display4 = "none";
+            _display5 = "block";
+
+        }
+        else if (filterValue == "DropDown With Same X-Axix Values")
+        {
+            _display1 = "none";
+            _display2 = "block";
+            _display3 = "none";
+            _display4 = "none";
+            _display5 = "block";
+
+        }
+        else if (filterValue == "DropDown With Diffrent Values")
+        {
+            _display1 = "none";
+            _display2 = "none";
+            _display3 = "block";
+            _display4 = "none";
+            _display5 = "block";
+        }
+        else if (filterValue == "Date Range")
+        {
+            _display1 = "none";
+            _display2 = "none";
+            _display3 = "none";
+            _display4 = "none";
+            _display5 = "block";
+        }
+    }
+
+    void CreateXml()
+    {
+        if (filterValue == "DropDown with Multiple Selection")
+        {
+            Xml1 = "<Param Control=\"ddl\" Position=\"" + Position + "\"  Multiple=\"true\" PlaceHolder=\"" + PlaceHolderName + "\"></Param>";
+        }
+        else if (filterValue == "DropDown With Same X-Axix Values")
+        {
+            Xml1 = "<Param Control=\"ddl\" Position=\"" + Position + "\"  Multiple=\"true\" PlaceHolder=\"" + PlaceHolderName + "\" IsQuerable=\"1\" Query=\"" + Query + "\" Label=\"" + parameter + "\" ddlData=\"XValue\"  XValue=\"" + XValue + "\"  YValue=\"" + YValue + "\"></Param>";
+        }
+        else if (filterValue == "DropDown With Diffrent Values")
+        {
+            Xml1 = "<Param Control=\"ddl\" Position=\"" + Position + "\"  Multiple=\"true\" PlaceHolder=\"" + PlaceHolderName + "\" IsQuerable=\"1\" Query=\"" + Query + "\" Label=\"" + parameter + "\" ddlData=\"XValue\"  XValue=\"" + XValue + "\"  YValue=\"" + YValue + "\" Sp=\"" + Sp + "\" ddlData=\"" + DdlData + "\" ddlValue=\"" + DdlValue + "\"></Param>";
+        }
+        //else if (filterValue == "Date Range")
+        //{
+
+        //}
+        _Xml += Xml1;
+    }
+
+    async Task Submit(PostRequestConfiguration arg)
+    {
+        string conn = _configuration.GetConnectionString("DashBoardConnection");
+        int i = await dynamicAPIService.InsertUpdateChartConfigData(conn, arg);
+        arg.Id = i;
+        //StaticDataSource.chartAttributesList.Add(arg);
+        //StateHasChanged();
+        string msg = string.Empty;
+        GetRequestConfiguration found = new GetRequestConfiguration();
+
+        if (i!=-2)
+        {
+            found = null;
+            if (i > 0)
+            {
+                found.Id = arg.Id;
+            }
+            else
+            {
+                found = StaticDataSource.chartAttributesList.FirstOrDefault(c => c.Id == arg.Id);
+            }
+
+            found.IsSp = arg.IsSp;
+            found.IsPopUpOpen = arg.IsPopUpOpen;
+            found.IsFilterOn = arg.IsFilterOn;
+            // found.IsChartGridLineOn = arg.IsChartGridLineOn;
+            found.Active = arg.Active;
+            found.QueryOrSp = arg.QueryOrSp;
+            found.Xml = !string.IsNullOrEmpty(arg.Xml) ? arg.Xml : null;
+            found.XAxixDisplayName = arg.XAxixDisplayName;
+            found.XAxixValueColumnName = arg.XAxixValueColumnName;
+            found.YAxixDisplayName = arg.YAxixDisplayName;
+            found.YAxixValueColumnName1 = arg.YAxixValueColumnName1;
+            found.YAxixValueColumnName2 = arg.YAxixValueColumnName2;
+            found.YAxixValueColumnName3 = arg.YAxixValueColumnName3;
+            found.YAxixValueColumnName4 = arg.YAxixValueColumnName4;
+            found.YAxixValueColumnName5 = arg.YAxixValueColumnName5;
+            found.Label1 = arg.Label1;
+            found.Label2 = arg.Label2;
+            found.Label3 = arg.Label3;
+            found.Label4 = arg.Label4;
+            found.Label5 = arg.Label5;
+            found.ChartOrder = arg.ChartOrder;
+
+            string chartype = StaticDataSource.ChartTypeList.Where(a => a.Id== arg.Id).Select(a => a.ChartType).First();
+            string Legend = StaticDataSource.LegendPositionList.Where(a => a.Id == arg.Id).Select(a => a.LegendPosition).FirstOrDefault();
+            string Position = StaticDataSource.BlockPositionData.Where(a => a.Id == arg.Id).Select(a => a.BlockPosition).FirstOrDefault();
+            string Color = StaticDataSource.ColorSchemeList.Where(a => a.Id == arg.Id).Select(a => a.ColorScheme).FirstOrDefault();
+            string BgColor = StaticDataSource.CardBgColorList.Where(a => a.Id == arg.Id).Select(a => a.CardBgColor).FirstOrDefault();
+            string Linetype1 = StaticDataSource.LineTypeList.Where(a => a.Id == arg.Id).Select(a => a.LineType).FirstOrDefault();
+            string Markertype1 = StaticDataSource.MarkerTypeList.Where(a => a.Id == arg.Id).Select(a => a.MarkerType).FirstOrDefault();
+            string Linetype2 = StaticDataSource.LineTypeList.Where(a => a.Id == arg.Id).Select(a => a.LineType).FirstOrDefault();
+            string Markertype2 = StaticDataSource.MarkerTypeList.Where(a => a.Id == arg.Id).Select(a => a.MarkerType).FirstOrDefault();
+            string Linetype3 = StaticDataSource.LineTypeList.Where(a => a.Id == arg.Id).Select(a => a.LineType).FirstOrDefault();
+            string Markertype3 = StaticDataSource.MarkerTypeList.Where(a => a.Id == arg.Id).Select(a => a.MarkerType).FirstOrDefault();
+            string Linetype4 = StaticDataSource.LineTypeList.Where(a => a.Id == arg.Id).Select(a => a.LineType).FirstOrDefault();
+            string Markertype4 = StaticDataSource.MarkerTypeList.Where(a => a.Id == arg.Id).Select(a => a.MarkerType).FirstOrDefault();
+            string Linetype5 = StaticDataSource.LineTypeList.Where(a => a.Id == arg.Id).Select(a => a.LineType).FirstOrDefault();
+            string Markertype5 = StaticDataSource.MarkerTypeList.Where(a => a.Id == arg.Id).Select(a => a.MarkerType).FirstOrDefault();
+            found.ChartType = chartype;//== 0 ? 1 : chartype;
+            found.LegendPosition = Legend;//== 0 ? 1 : Legend;
+            found.BlockPosition = Position;//== 0 ? 1 : Position;
+            found.CardBgColor = BgColor;//== 0 ? 1 : BgColor;
+            found.LineType1 = Linetype1;//== 0 ? 1 : Linetype1;
+            found.LineType2 = Linetype2;//== 0 ? 1 : Linetype2;
+            found.LineType3 = Linetype3;//== 0 ? 1 : Linetype3;
+            found.LineType4 = Linetype4;//== 0 ? 1 : Linetype4;
+            found.LineType5 = Linetype5;//== 0 ? 1 : Linetype5;
+            found.MarkerType1 = Markertype1;//== 0 ? 1 : Markertype1;
+            found.MarkerType2 = Markertype2;//== 0 ? 1 : Markertype2;
+            found.MarkerType3 = Markertype3;//== 0 ? 1 : Markertype3;
+            found.MarkerType4 = Markertype4;//== 0 ? 1 : Markertype4;
+            found.MarkerType5 = Markertype5;//== 0 ? 1 : Markertype5;
+
+            if (i > 0)
+            {
+                StaticDataSource.chartAttributesList.Add(found);
+                msg = $"Id {found.Id} has been Added.";
+            }
+            else
+            {
+                msg = $"Id {found.Id} has updated.";
+            }
+        }
+        else
+        {
+            msg = $"Somthing went wrong! Plz Try again.";
+        }
+        dialogService.Close(msg);
+    }
+
+    void Cancel()
+    {
+        dialogService.Close();
+    }
+}

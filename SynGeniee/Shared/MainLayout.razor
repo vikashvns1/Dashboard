@@ -1,0 +1,91 @@
+﻿@using Microsoft.AspNetCore.Components
+@using Microsoft.AspNetCore.Http
+@using Radzen.Blazor
+@using DashBoardModel
+@inherits LayoutComponentBase
+@inject NavigationManager UriHelper
+@inject IJSRuntime JSRuntime
+@*@inject IHttpContextAccessor httpContextAccessor*@
+@inject NavigationManager navigationManager
+
+@using Syncfusion.Blazor.Notifications
+@using SynGeniee.Components
+
+<RadzenHeader Style="background-color:#303EA0;color:white">
+    <ChildContent>
+        <div class="row justify-content-start align-items-center">
+            <div class="col-6 d-flex align-items-center">
+                <RadzenSidebarToggle Click="@(args => { sidebarExpanded = !sidebarExpanded; bodyExpanded = !bodyExpanded; })" Style="background-color:#303EA0;color:white;border-color:#303EA0">
+                </RadzenSidebarToggle>
+                <RadzenImage Path="/Images/Banner1.jpeg" Style="border-color:#303EA0" />
+            </div>
+            <div class="col-6 d-flex align-items-center justify-content-end">
+                <div class="d-none d-md-inline-flex align-items-center">
+                    <UserStatus />
+                </div>
+            </div>
+        </div>
+    </ChildContent>
+</RadzenHeader>
+<div style="width:100%;margin-top:20px" class="container-fluid">
+    <RadzenBody @ref="@body0" @bind-Expanded="@bodyExpanded">
+        <ChildContent>
+            <RadzenContentContainer Name="main" Style="width:100%">
+                @Body
+            </RadzenContentContainer>
+        </ChildContent>
+    </RadzenBody>
+</div>
+
+<Menu sidebar0="sidebar0" sidebarExpanded="sidebarExpanded"></Menu>
+
+<RadzenDialog />
+<ToastComponent />
+
+
+@code { RadzenSidebar sidebar0;
+    RadzenBody body0;
+    bool sidebarExpanded = false;
+    bool bodyExpanded = true;
+    SfToast ToastObj;
+
+    private int ToastFlag = 0;
+    private string ToastContent;
+
+    IEnumerable<Example> examples;
+
+    void OnMenuClick(DashBoardModel.MenuItem arg)
+    {
+        StaticDataSource.ComponentId = arg.ComponentId;
+    }
+
+    void OnClick(DashBoardModel.MenuItem arg)
+    {
+        StaticDataSource.ComponentId = arg.ComponentId;
+        navigationManager.NavigateTo(arg.PageName);
+
+    }
+
+protected override void OnInitialized()
+{
+    //StaticDataSource.ComponentId = 0;
+    //DbNotificationService.DBNotificationChanged += this.DbNotificationChanged;
+    sidebarExpanded = false;
+    bodyExpanded = true;
+
+    //   if (httpContextAccessor != null && httpContextAccessor.HttpContext != null &&
+    //httpContextAccessor.HttpContext.Request != null && httpContextAccessor.HttpContext.Request.Headers.ContainsKey("User-Agent"))
+    //   {
+    //       var userAgent = httpContextAccessor.HttpContext.Request.Headers["User-Agent"].FirstOrDefault();
+    //       if (!string.IsNullOrEmpty(userAgent))
+    //       {
+    //           if (userAgent.Contains("iPhone") || userAgent.Contains("Android") || userAgent.Contains("Googlebot"))
+    //           {
+    //               sidebarExpanded = false;
+    //               bodyExpanded = true;
+    //           }
+    //       }
+    //   }
+
+}
+} 

@@ -1,0 +1,262 @@
+﻿@using System.Data;
+@using System.Dynamic;
+@using System.Collections.Generic;
+@using System.Collections.ObjectModel;
+@using System.Linq;
+@using System.Threading.Tasks;
+@using Newtonsoft.Json;
+@using DashBoardModel;
+@using Syncfusion.Blazor.DropDowns;
+@if (ChartSource.IsFilterOn == 1)
+{
+    <div class="row">
+        <div class="col-12">
+            <AlertMessage Message="@message" MessageType="@messageType" />
+        </div>
+        @foreach (Param prm in ChartSource.Filter)
+        {
+            <div class="@prm.Position">
+                @if (prm.Control == "ddl" && prm.ddlData == "XValue" && prm.Multiple == "false")
+                {
+                    <RadzenDropDown AllowClear="true" Placeholder=@prm.PlaceHolder TValue="string" Multiple="false" TextProperty="XData" ValueProperty="XData" @bind-Value="@prm.Value" Data="@prm.ControlData.Select(a => (a.XData).ToString()).Distinct()" Change=@((args) => DropDownChanged(prm))>
+                    </RadzenDropDown>
+                }
+                else if (prm.Control == "ddl" && prm.ddlData != "XValue" && prm.Multiple == "false")
+                {
+                    <RadzenDropDown AllowClear="true" Placeholder=@prm.PlaceHolder TValue="string" TextProperty="XData" ValueProperty="XData1" @bind-Value="@prm.Value" Data="@prm.ControlData.Select(c => new { XData = c.XData, XData1 = c.YData1.ToString() }).Distinct()" Change=@((args) => DropDownChanged2(prm))>
+                    </RadzenDropDown>
+                }
+                else if (prm.Control == "ddl" && prm.ddlData == "XValue" && prm.Multiple == "true")
+                {
+                    <RadzenDropDown Placeholder=@prm.PlaceHolder Multiple="true" @bind-Value="@multipleValues" TextProperty="XData" ValueProperty="XData" Data="@prm.ControlData" Change=@((args) =>DropDownChanged(prm))>
+                    </RadzenDropDown>
+                }
+                else if (prm.Control == "DateRange")
+                {
+                    <span>From &nbsp; </span> <RadzenDatePicker DateFormat="dd/MM/yy" YearRange="@prm.YearRange" Placeholder="Start Date" @bind-Value="@StartDate" TValue="DateTime"></RadzenDatePicker><span> &nbsp; To &nbsp;</span>
+                    <RadzenDatePicker DateFormat="dd/MM/yy" Placeholder="End Date" YearRange="@prm.YearRange" @bind-Value="@EndDate" TValue="DateTime"></RadzenDatePicker><span>&nbsp; </span> <RadzenButton ButtonType="ButtonType.Submit" Text="Submit" Click="@((args)=>DateRange(prm))"></RadzenButton>
+                }
+            </div>
+        }
+    </div>
+}
+
+@code {
+    [Inject]
+    public IDynamicAPIService dynamicAPIService { get; set; }
+    [Parameter]
+    public GetRequestConfiguration ChartSource { get; set; }
+    [Parameter]
+    public List<DataClass> updateedDataSource { get; set; }
+    [Parameter]
+    public EventCallback<List<DataClass>> DropDownChange { get; set; }
+    [Parameter]
+    public EventCallback<List<DataClass>> Submite { get; set; }
+    DateTime StartDate;
+    DateTime EndDate = DateTime.Now.Date;
+    IEnumerable<string> multipleValues = new string[] { "ALFKI", "ANATR" };
+
+    string message = string.Empty;
+    AlertMessageType messageType = AlertMessageType.Success;
+    DataClass d = new DataClass();
+
+    public class TargetType
+    {
+        public string PropA { get; set; }
+        public string PropB { get; set; }
+    }
+
+    async Task DropDownChanged(Param value)
+    {
+        message = string.Empty;
+        if (value.Multiple != "true")
+        {
+            if (value.Value == "ALL" || value.Value == "-1")
+            {
+                updateedDataSource = ChartSource.ChartData;
+                StateHasChanged();
+            }
+            else
+            {
+                var _param = ChartSource.Filter.Select(result => new Param { QueryOrSp = result.QueryOrSp, Label = result.Label, Value = result.Value }).Where(a => a.QueryOrSp == value.QueryOrSp).FirstOrDefault();
+
+                string jsonChartstring = await dynamicAPIService.GetDatabyParam(StaticDataSource.MenuItem.ConnectionString, StaticDataSource.MenuItem.ProviderName, _param);
+                var response = JsonConvert.DeserializeObject<OutputData>(jsonChartstring);
+
+                if (response.DynamicData != null)
+                {
+                    StaticDataSource.ChartDataObj = new ObservableCollection<ExpandoObject>(response.DynamicData);
+                    List<DataClass> chartDataList = new List<DataClass>();
+                    foreach (var inputAttribute in StaticDataSource.ChartDataObj)
+                    {
+                        DataClass row = new DataClass();
+                        foreach (KeyValuePair<string, object> itm in inputAttribute)
+                        {
+                            // Create a new dynamic ExpandoObject
+                            if (itm.Key.ToString() == value.XValue)
+                                row.XData = itm.Value.ToString();
+                            else if (itm.Key.ToString() == value.YValue)
+                                row.YData1 = (itm.Value == null) ? 0 : Convert.ToDouble((itm.Value.ToString()));
+                            else if (itm.Key.ToString() == value.YValue1)
+                                row.YData2 = (itm.Value == null) ? 0 : Convert.ToDouble((itm.Value.ToString()));
+                            else if (itm.Key.ToString() == value.YValue2)
+                                row.YData3 = (itm.Value == null) ? 0 : Convert.ToDouble((itm.Value.ToString()));
+                            else if (itm.Key.ToString() == value.YValue3)
+                                row.YData4 = (itm.Value == null) ? 0 : Convert.ToDouble((itm.Value.ToString()));
+                            else if (itm.Key.ToString() == value.YValue4)
+                                row.YData4 = (itm.Value == null) ? 0 : Convert.ToDouble((itm.Value.ToString()));
+                        }
+                        // Add the object to the dynamic output list
+                        chartDataList.Add(row);
+                    }
+                    //value.ControlData = chartDataList;
+                    updateedDataSource = chartDataList;
+                    StateHasChanged();
+                }
+            }
+        }
+        else
+        {
+            var CategoriesNotOnLst = ChartSource.ChartData.Where(x => multipleValues.Any(z => x.XData == z)).ToList();
+            updateedDataSource = CategoriesNotOnLst;
+            StateHasChanged();
+        }
+        await DropDownChange.InvokeAsync(updateedDataSource);
+    }
+    async Task DropDownChanged2(Param value)
+    {
+        message = string.Empty;
+        if (value.Multiple != "true")
+        {
+            if (value.Value == "ALL" || value.Value == "-1")
+            {
+                updateedDataSource = ChartSource.ChartData;
+                StateHasChanged();
+            }
+            else
+            {
+                var _param = ChartSource.Filter.Select(result => new Param { QueryOrSp = result.QueryOrSp, Label = result.Label, Value = result.Value, Label1 = result.Label1 }).Where(a => a.QueryOrSp == value.QueryOrSp).FirstOrDefault();
+                if (!string.IsNullOrEmpty(_param.Label1))
+                {
+                    int count = ChartSource.Filter.Count - 2;
+                    if (ChartSource.Filter[count].Value != null)
+                    {
+                        _param.Value1 = ChartSource.Filter[count].Value.ToString();
+                    }
+                    else
+                    {
+                        message = "Please Select " + ChartSource.Filter[count].PlaceHolder;
+                        messageType = AlertMessageType.Error;
+                        return;
+                    }
+                }
+
+                string jsonChartstring = await dynamicAPIService.GetDatabyParam(StaticDataSource.MenuItem.ConnectionString, StaticDataSource.MenuItem.ProviderName, _param);
+                var response = JsonConvert.DeserializeObject<OutputData>(jsonChartstring);
+
+                if (response.DynamicData != null)
+                {
+                    StaticDataSource.ChartDataObj = new ObservableCollection<ExpandoObject>(response.DynamicData);
+                    List<DataClass> chartDataList = new List<DataClass>();
+                    foreach (var inputAttribute in StaticDataSource.ChartDataObj)
+                    {
+                        DataClass row = new DataClass();
+                        foreach (KeyValuePair<string, object> itm in inputAttribute)
+                        {
+                            // Create a new dynamic ExpandoObject
+                            if (itm.Key.ToString() == value.XValue)
+                                row.XData = itm.Value.ToString();
+                            else if (itm.Key.ToString() == value.YValue)
+                                row.YData1 = (itm.Value == null) ? 0 : Convert.ToDouble((itm.Value.ToString()));
+                            else if (itm.Key.ToString() == value.YValue1)
+                                row.YData2 = (itm.Value == null) ? 0 : Convert.ToDouble((itm.Value.ToString()));
+                            else if (itm.Key.ToString() == value.YValue2)
+                                row.YData3 = (itm.Value == null) ? 0 : Convert.ToDouble((itm.Value.ToString()));
+                            else if (itm.Key.ToString() == value.YValue3)
+                                row.YData4 = (itm.Value == null) ? 0 : Convert.ToDouble((itm.Value.ToString()));
+                            else if (itm.Key.ToString() == value.YValue4)
+                                row.YData4 = (itm.Value == null) ? 0 : Convert.ToDouble((itm.Value.ToString()));
+                        }
+                        // Add the object to the dynamic output list
+                        chartDataList.Add(row);
+                    }
+                    //value.ControlData = chartDataList;
+                    updateedDataSource = chartDataList;
+                    StateHasChanged();
+                }
+            }
+        }
+        else
+        {
+            var CategoriesNotOnLst = ChartSource.ChartData.Where(x => multipleValues.Any(z => x.XData == z)).ToList();
+            updateedDataSource = CategoriesNotOnLst;
+            StateHasChanged();
+        }
+        await DropDownChange.InvokeAsync(updateedDataSource);
+    }
+    async Task DateRange(Param value)
+    {
+        message = string.Empty;
+        if (StartDate == null)
+        {
+            message = "Please Select Start Date";
+            messageType = AlertMessageType.Error;
+            return;
+        }
+
+        if (EndDate == null)
+        {
+            message = "Please Select End Date";
+            messageType = AlertMessageType.Error;
+            return;
+        }
+
+        if (StartDate >= EndDate)
+        {
+            message = "End Date cannot be before Start Date.";
+            messageType = AlertMessageType.Warning;
+            return;
+        }
+
+        RangeDateParam obj = new RangeDateParam();
+        obj.IsSp = value.IsSp;
+        obj.QueryOrSp = value.QueryOrSp;
+        obj.StartDate = StartDate.ToString();
+        obj.EndDate = EndDate.ToString();
+        string jsonChartstring = await dynamicAPIService.GetDateByDateRange(StaticDataSource.MenuItem.ConnectionString, StaticDataSource.MenuItem.ProviderName, obj);
+        var ChartDataObj = JsonConvert.DeserializeObject<ObservableCollection<ExpandoObject>>(jsonChartstring);
+
+        if (ChartDataObj != null)
+        {
+            List<DataClass> chartDataList = new List<DataClass>();
+            foreach (var inputAttribute in ChartDataObj)
+            {
+                DataClass row = new DataClass();
+                foreach (KeyValuePair<string, object> itm in inputAttribute)
+                {
+                    // Create a new dynamic ExpandoObject
+                    if (itm.Key.ToString() == value.XValue)
+                        row.XData = itm.Value.ToString();
+                    else if (itm.Key.ToString() == value.YValue)
+                        row.YData1 = (itm.Value == null) ? 0 : Convert.ToDouble((itm.Value.ToString()));
+                    else if (itm.Key.ToString() == value.YValue1)
+                        row.YData2 = (itm.Value == null) ? 0 : Convert.ToDouble((itm.Value.ToString()));
+                    else if (itm.Key.ToString() == value.YValue2)
+                        row.YData3 = (itm.Value == null) ? 0 : Convert.ToDouble((itm.Value.ToString()));
+                    else if (itm.Key.ToString() == value.YValue3)
+                        row.YData4 = (itm.Value == null) ? 0 : Convert.ToDouble((itm.Value.ToString()));
+                    else if (itm.Key.ToString() == value.YValue4)
+                        row.YData4 = (itm.Value == null) ? 0 : Convert.ToDouble((itm.Value.ToString()));
+                }
+                // Add the object to the dynamic output list
+                chartDataList.Add(row);
+            }
+            //value.ControlData = chartDataList;
+            updateedDataSource = chartDataList;
+            StateHasChanged();
+        }
+
+        await Submite.InvokeAsync(updateedDataSource);
+    }
+
+}

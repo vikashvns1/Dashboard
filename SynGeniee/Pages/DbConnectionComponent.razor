@@ -1,0 +1,139 @@
+﻿@layout AdminLayout
+@page "/DbConnectionComponent"
+@inject NavigationManager urihelper;
+@using Microsoft.AspNetCore.WebUtilities;
+@using Microsoft.Extensions.Configuration
+@inject IConfiguration  _configuration
+@using DashBoardModel
+@inject Radzen.DialogService dialogService
+@inject NotificationService notificationService
+@inject TooltipService tooltipService
+@using Syncfusion.Blazor.Grids
+@using Syncfusion.Blazor.Data
+@using Syncfusion.Blazor.Buttons
+@using Syncfusion.Blazor.DropDowns
+@using System.Collections.ObjectModel
+@using Newtonsoft.Json
+
+@if (StaticDataSource.DbConnectionList == null)
+{
+    <p><em>Loading....</em></p>
+    <RadzenProgressBar Mode="ProgressBarMode.Indeterminate"></RadzenProgressBar>
+}
+else
+{ <h2>Database Connections</h2>
+    <SfGrid @ref="DefaultGrid" TValue="DbConnection" Height="@Height" RowHeight="30" AllowFiltering="true" DataSource="@(StaticDataSource.DbConnectionList)" Toolbar="@(new List<string>() { "Add" })">
+        <GridEditSettings AllowAdding="true" AllowEditing="true" AllowDeleting="true" AllowEditOnDblClick="false">
+        </GridEditSettings>
+        <GridFilterSettings Type="Syncfusion.Blazor.Grids.FilterType.Excel" ShowFilterBarStatus="true"></GridFilterSettings>
+        <GridEvents OnActionBegin="ActionBeginAsync" TValue="DbConnection"></GridEvents>
+        <GridColumns>
+            <GridColumn HeaderText="Manage Records" Width="150px">
+                <GridCommandColumns>
+                    <GridCommandColumn Type="CommandButtonType.Edit" ButtonOption="@(new CommandButtonOptions() {IconCss="e-icons e-edit", CssClass="e-flat" })"></GridCommandColumn>
+                    <GridCommandColumn Type="CommandButtonType.Delete" ButtonOption="@(new CommandButtonOptions() {IconCss="e-icons e-delete", CssClass="e-flat" })"></GridCommandColumn>
+                    <GridCommandColumn Type="CommandButtonType.Save" ButtonOption="@(new CommandButtonOptions() {IconCss="e-icons e-save", CssClass="e-flat" })"></GridCommandColumn>
+                    <GridCommandColumn Type="CommandButtonType.Cancel" ButtonOption="@(new CommandButtonOptions() {IconCss="e-icons e-cancel-icon", CssClass="e-flat" })"></GridCommandColumn>
+                </GridCommandColumns>
+            </GridColumn>
+            <GridColumn Field=@nameof(DC.Id) Type="ColumnType.Number" EditorSettings="@EditParams" IsIdentity="true" IsPrimaryKey="true" Width="70px"></GridColumn>
+            <GridColumn Field=@nameof(DC.UserId) Type="ColumnType.Number" EditorSettings="@EditParams" DefaultValue="@UserId" Width="70px" AllowEditing="false" AllowAdding="false" AllowFiltering="false"></GridColumn>
+            <GridColumn Field=@nameof(DC.ConnectionString) Type="ColumnType.String" AllowFiltering="false"></GridColumn>
+            <GridColumn Field=@nameof(DC.ProviderName) Width="200px" Type="ColumnType.String">
+                <EditTemplate>
+                    <SfDropDownList TValue="string" TItem="ProviderName" @bind-Value="@((context as DbConnection).ProviderName)" Placeholder="Provider Name" DataSource="@_ProviderName">
+                        <DropDownListFieldSettings Value="ID" Text="Text"></DropDownListFieldSettings>
+                    </SfDropDownList>
+                </EditTemplate>
+            </GridColumn>
+            <GridColumn Field=@nameof(DC.ConnectionName) Width="200px" Type="ColumnType.String" AllowFiltering="false"></GridColumn>
+        </GridColumns>
+    </SfGrid>
+}
+@code {
+    public DbConnection DC { get; set; }
+    static string conn;
+    [Inject]
+    public IDynamicAPIService dynamicAPIService { get; set; }
+    [Inject]
+    public NavigationManager Nav { get; set; }
+    public string Height = (StaticDataSource.WindowsHeight - 220) + "px";
+    int UserId = 0;
+
+    protected override async Task OnInitializedAsync()
+    {
+        System.Uri uri;
+        uri = Nav.ToAbsoluteUri(Nav.Uri);
+        if (QueryHelpers.ParseQuery(uri.Query).TryGetValue("Id", out var Id))
+        {
+            UserId = Convert.ToInt32(Id);
+            conn = _configuration.GetConnectionString("DashBoardConnection");
+
+            var db = await dynamicAPIService.GetDBConnections(conn, Convert.ToInt32(Id));
+            ObservableCollection<DbConnection> Objmenus = JsonConvert.DeserializeObject<ObservableCollection<DbConnection>>(db);
+            StaticDataSource.DbConnectionList = Objmenus;
+        }
+    }
+
+    void ShowTooltip(ElementReference elementReference, string content, TooltipOptions options = null) => tooltipService.Open(elementReference, content, options);
+
+    public SfGrid<DbConnection> DefaultGrid;
+    public async Task ActionBeginAsync(ActionEventArgs<DbConnection> args)
+    {
+        if (args.RequestType == Syncfusion.Blazor.Grids.Action.Save)
+        {
+            //args.Cancel = true;
+            int i = await dynamicAPIService.AddEditUserDB(conn, args.Data);
+            var found = StaticDataSource.DbConnectionList.FirstOrDefault(c => c.Id == args.Data.Id);
+
+            if (i == 0)
+            {
+                int index = StaticDataSource.DbConnectionList.IndexOf(found);
+                StaticDataSource.DbConnectionList[index] = args.Data;
+                notificationService.Notify(new NotificationMessage() { Severity = NotificationSeverity.Success, Summary = "DB Connection ", Detail = $"Connection has Updated Successfully.", Duration = 4000 });
+            }
+            else
+            {
+                args.Data.Id = i;
+
+                //StaticDataSource.AdminData.Add(data);
+                notificationService.Notify(new NotificationMessage() { Severity = NotificationSeverity.Success, Summary = "DB Connection", Detail = $"Connection has beed added Successfully.", Duration = 4000 });
+            }
+            await DefaultGrid.CloseEdit();
+
+        }
+        else if (args.RequestType == Syncfusion.Blazor.Grids.Action.Delete)
+        {
+            //args.Cancel = true;
+            int i = await dynamicAPIService.DeleteUser(conn, args.Data.Id, "DeleteUserDbConnection");
+            if (i == -1)
+            {
+                StaticDataSource.DbConnectionList.Remove(args.Data);
+                notificationService.Notify(new NotificationMessage() { Severity = NotificationSeverity.Success, Summary = "DB Connection", Detail = $"Coonection has Deleted Successfully.", Duration = 4000 });
+            }
+        }
+        await InvokeAsync(() =>
+        {
+            this.StateHasChanged();
+        });
+    }
+
+    public IEditorSettings EditParams = new NumericEditCellParams
+    {
+        Params = new Syncfusion.Blazor.Inputs.NumericTextBoxModel<object>() { ShowClearButton = true, ShowSpinButton = false }
+    };
+
+
+public class ProviderName
+    {
+        public string ID { get; set; }
+        public string Text { get; set; }
+    }
+    List<ProviderName> _ProviderName = new List<ProviderName> {
+    new ProviderName() { ID= "SqlServer", Text= "SqlServer" },
+    new ProviderName() { ID= "PostgreSQL", Text= "PostgreSQL" },
+  };
+}
+
+
+}

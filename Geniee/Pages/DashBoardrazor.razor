@@ -1,0 +1,756 @@
+﻿@using System.Data;
+@using System.Dynamic;
+@using CColor = System.Drawing.Color;
+@using System.Collections.Generic;
+@using System.Collections.ObjectModel;
+@using System.Linq;
+@using System.Threading.Tasks;
+@using Newtonsoft.Json;
+@using DashBoardModel;
+
+
+@if (ChartSource.ChartType == "Line")
+{
+    <div class="card" style="box-shadow: 5px 10px 18px #888888; border-radius: 20px;height:100%">
+        <div class="card-header">
+            <div class="row">
+                <div class="col-12" style="font-weight:bold;text-align:center">@ChartSource.Title</div>
+
+            </div>
+        </div>
+        @if (ChartSource.IsFilterOn == 1)
+        {
+            <div class="card-footer">
+                <FilterComponent ChartSource="@ChartSource" DropDownChange="@UpdateChart" Submite="@DateRange"></FilterComponent>
+            </div>
+        }
+        <div class="card-body">
+            <DxChart Data="@updateedDataSource" LabelOverlap="ChartLabelOverlap.Hide" CustomizeSeriesPoint="@PreparePointPaiLabel">
+                <div class="row">
+                    <div style="width:150px">
+                        <DxCheckBox CssClass="w-100" @bind-Checked="@IsLableShow" Alignment="CheckBoxContentAlignment.Left" LabelPosition="LabelPosition.Right">Show Label</DxCheckBox>
+                    </div>
+                    <div style="width:65px;align-content:end">
+                        <DxButton CssClass="w-100" RenderStyle="ButtonRenderStyle.Info" SizeMode="SizeMode.Small" Text="Refresh" IconCssClass="redo" IconPosition="ButtonIconPosition.BeforeText" Click="()=>RefreshChartData()" />
+                    </div>
+                </div>
+                <DxChartLineSeries Name="@ChartSource.Label1" ValueField="@((DataClass i) => i.YData1)" ArgumentField="@(i => i.XData)" AggregationMethod="@Enumerable.Sum">
+                </DxChartLineSeries>
+                @if (ChartSource.Label2 != null)
+                {<DxChartLineSeries Name="@ChartSource.Label2" ValueField="@((DataClass i) => i.YData2)" ArgumentField="@(i => i.XData)" AggregationMethod="@Enumerable.Sum">
+                    </DxChartLineSeries>
+                }
+                @if (ChartSource.Label3 != null)
+                {<DxChartLineSeries Name="@ChartSource.Label3" ValueField="@((DataClass i) => i.YData3)" ArgumentField="@(i => i.XData)" AggregationMethod="@Enumerable.Sum">
+                    </DxChartLineSeries>
+                }
+                @if (ChartSource.Label4 != null)
+                {<DxChartLineSeries Name="@ChartSource.Label4" ValueField="@((DataClass i) => i.YData4)" ArgumentField="@(i => i.XData)" AggregationMethod="@Enumerable.Sum">
+                    </DxChartLineSeries>
+                }
+                @if (ChartSource.Label5 != null)
+                {<DxChartLineSeries Name="@ChartSource.Label5" ValueField="@((DataClass i) => i.YData4)" ArgumentField="@(i => i.XData)" AggregationMethod="@Enumerable.Sum" />
+                }
+
+                <DxChartLegend Visible="@Convert.ToBoolean(ChartSource.LegendVisible)" Position="@((RelativePosition)ChartSource.LegendRelativePosition)" Orientation="@((DevExpress.Blazor.Orientation)ChartSource.LegendOrientation)" HorizontalAlignment="@((HorizontalAlignment)ChartSource.LegendHorizontalAlignment)" VerticalAlignment="@((VerticalEdge)ChartSource.LegendVerticalEdge)" AllowToggleSeries="@(Convert.ToBoolean(ChartSource.LegendVisible))" />
+
+                <DxChartArgumentAxis>
+                    <DxChartAxisTitle Text="@ChartSource.XAxixDisplayName" />
+                </DxChartArgumentAxis>
+                <DxChartValueAxis>
+                    <DxChartAxisTitle Text="@ChartSource.YAxixDisplayName" />
+                </DxChartValueAxis>
+                <DxChartTooltip>
+                    <div class="p-1">
+                        @*<p class="text-align-center"><b>@context.Point.SeriesName</b></p>*@
+                        <b>@ChartSource.XAxixDisplayName :</b> @context.Point.Argument<br />
+                        <b>@ChartSource.YAxixDisplayName :</b> @context.Point.Value
+                    </div>
+                </DxChartTooltip>
+            </DxChart>
+        </div>
+    </div>
+}
+else if (ChartSource.ChartType == "Area")
+{
+    <div class="card" style="box-shadow: 5px 10px 18px #888888; border-radius: 20px;height:100%">
+        <div class="card-header">
+            <div class="row">
+                <div class="col-12" style="font-weight:bold;text-align:center">@ChartSource.Title</div>
+
+            </div>
+        </div>
+        @if (ChartSource.IsFilterOn == 1)
+        {
+            <div class="card-footer">
+                <FilterComponent ChartSource="@ChartSource" DropDownChange="@UpdateChart" Submite="@DateRange"></FilterComponent>
+            </div>
+        }
+        <div class="card-body">
+            <div class="row" style="width:40%;">
+                @*<DxComboBox Data="@VisibleOnOff" @bind-Value="IsLableShow" TextFieldName="@nameof(visible.Text)" ValueFieldName="@nameof(visible.Value)"></DxComboBox>*@
+                <div class="row">
+                    <div style="width:150px">
+                        <DxCheckBox CssClass="w-100" @bind-Checked="@IsLableShow" Alignment="CheckBoxContentAlignment.Left" LabelPosition="LabelPosition.Right">Show Label</DxCheckBox>
+                    </div>
+                    <div style="width:65px;align-content:end">
+                        <DxButton CssClass="w-100" RenderStyle="ButtonRenderStyle.Info" SizeMode="SizeMode.Small" Text="Refresh" IconCssClass="redo" IconPosition="ButtonIconPosition.BeforeText" Click="()=>RefreshChartData()" />
+                    </div>
+                </div>
+            </div>
+            <DxChart Data="@updateedDataSource">
+                <DxChartAreaSeries Name="@ChartSource.Label1" ValueField="@((DataClass i) => i.YData1)" ArgumentField="@(i => i.XData)" AggregationMethod="@Enumerable.Sum">
+                </DxChartAreaSeries>
+                @if (ChartSource.Label2 != null)
+                {<DxChartAreaSeries Name="@ChartSource.Label2" ValueField="@((DataClass i) => i.YData2)" ArgumentField="@(i => i.XData)" AggregationMethod="@Enumerable.Sum">
+                    </DxChartAreaSeries>
+                }
+                @if (ChartSource.Label3 != null)
+                {<DxChartAreaSeries Name="@ChartSource.Label3" ValueField="@((DataClass i) => i.YData3)" ArgumentField="@(i => i.XData)" AggregationMethod="@Enumerable.Sum">
+                    </DxChartAreaSeries>
+                }
+                @if (ChartSource.Label4 != null)
+                {<DxChartAreaSeries Name="@ChartSource.Label4" ValueField="@((DataClass i) => i.YData4)" ArgumentField="@(i => i.XData)" AggregationMethod="@Enumerable.Sum">
+                    </DxChartAreaSeries>
+                }
+                @if (ChartSource.Label5 != null)
+                {
+                    <DxChartAreaSeries Name="@ChartSource.Label5" ValueField="@((DataClass i) => i.YData4)" ArgumentField="@(i => i.XData)" AggregationMethod="@Enumerable.Sum">
+                    </DxChartAreaSeries>
+                }
+                <DxChartLegend Visible="@Convert.ToBoolean(ChartSource.LegendVisible)" Position="@((RelativePosition)ChartSource.LegendRelativePosition)" Orientation="@((DevExpress.Blazor.Orientation)ChartSource.LegendOrientation)" HorizontalAlignment="@((HorizontalAlignment)ChartSource.LegendHorizontalAlignment)" VerticalAlignment="@((VerticalEdge)ChartSource.LegendVerticalEdge)" AllowToggleSeries="@(Convert.ToBoolean(ChartSource.LegendVisible))" />
+                <DxChartArgumentAxis>
+                    <DxChartAxisTitle Text="@ChartSource.XAxixDisplayName" />
+                </DxChartArgumentAxis>
+                <DxChartValueAxis>
+                    <DxChartAxisTitle Text="@ChartSource.YAxixDisplayName" />
+                </DxChartValueAxis>
+                <DxChartTooltip>
+                    <div class="p-1">
+                        @*<p class="text-align-center"><b>@context.Point.SeriesName</b></p>*@
+                        <b>@ChartSource.XAxixDisplayName :</b> @context.Point.Argument<br />
+                        <b>@ChartSource.YAxixDisplayName :</b> @context.Point.Value
+                    </div>
+                </DxChartTooltip>
+            </DxChart>
+        </div>
+    </div>
+}
+else if (ChartSource.ChartType == "Column")
+{
+    <div class="card" style="box-shadow: 5px 10px 18px #888888; border-radius: 20px;height:100%">
+        <div class="card-header">
+
+            <div class="col-12" style="font-weight:bold;text-align:center">@ChartSource.Title</div>
+
+        </div>
+        @if (ChartSource.IsFilterOn == 1)
+        {
+            <div class="card-footer">
+                <FilterComponent ChartSource="@ChartSource" DropDownChange="@UpdateChart" Submite="@DateRange"></FilterComponent>
+            </div>
+        }
+        <div class="card-body">
+
+            <DxChart Data="@updateedDataSource" LabelOverlap="ChartLabelOverlap.Hide" CustomizeSeriesPoint="@PreparePointBARLabel">
+                <div class="row">
+                    <div  style="width:150px">
+                        <DxCheckBox CssClass="w-100" @bind-Checked="@IsLableShow" Alignment="CheckBoxContentAlignment.Left" LabelPosition="LabelPosition.Right">Show Label</DxCheckBox>
+                    </div>
+                    <div  style="width:65px;align-content:end">
+                        <DxButton CssClass="w-100" RenderStyle="ButtonRenderStyle.Info" SizeMode="SizeMode.Small" Text="Refresh" IconCssClass="redo" IconPosition="ButtonIconPosition.BeforeText" Click="()=>RefreshChartData()" />
+                    </div>
+                </div>
+                <DxChartBarSeries Name="@ChartSource.Label1" ValueField="@((DataClass i) => i.YData1)" ArgumentField="@(i => i.XData)" AggregationMethod="@Enumerable.Sum">
+                    <DxChartSeriesPoint Visible="@IsLableShow" />
+                </DxChartBarSeries>
+                @if (ChartSource.Label2 != null)
+                {<DxChartBarSeries Name="@ChartSource.Label2" ValueField="@((DataClass i) => i.YData2)" ArgumentField="@(i => i.XData)" AggregationMethod="@Enumerable.Sum">
+                        <DxChartSeriesPoint Visible="@IsLableShow" />
+                    </DxChartBarSeries>
+                }
+                @if (ChartSource.Label3 != null)
+                {<DxChartBarSeries Name="@ChartSource.Label3" ValueField="@((DataClass i) => i.YData3)" ArgumentField="@(i => i.XData)" AggregationMethod="@Enumerable.Sum">
+                        <DxChartSeriesPoint Visible="@IsLableShow" />
+                    </DxChartBarSeries>
+                }
+                @if (ChartSource.Label4 != null)
+                {<DxChartBarSeries Name="@ChartSource.Label4" ValueField="@((DataClass i) => i.YData4)" ArgumentField="@(i => i.XData)" AggregationMethod="@Enumerable.Sum">
+                        <DxChartSeriesPoint Visible="@IsLableShow" />
+                    </DxChartBarSeries>
+                }
+                @if (ChartSource.Label5 != null)
+                {<DxChartBarSeries Name="@ChartSource.Label5" ValueField="@((DataClass i) => i.YData4)" ArgumentField="@(i => i.XData)" AggregationMethod="@Enumerable.Sum">
+                        <DxChartSeriesPoint Visible="@IsLableShow" />
+                    </DxChartBarSeries>
+                }
+                <DxChartLegend Visible="@Convert.ToBoolean(ChartSource.LegendVisible)" Position="@((RelativePosition)ChartSource.LegendRelativePosition)" Orientation="@((DevExpress.Blazor.Orientation)ChartSource.LegendOrientation)" HorizontalAlignment="@((HorizontalAlignment)ChartSource.LegendHorizontalAlignment)" VerticalAlignment="@((VerticalEdge)ChartSource.LegendVerticalEdge)" AllowToggleSeries="@(Convert.ToBoolean(ChartSource.LegendVisible))">
+
+                </DxChartLegend>
+
+                <DxChartArgumentAxis>
+                    <DxChartAxisTitle Text="@ChartSource.XAxixDisplayName" />
+                </DxChartArgumentAxis>
+                <DxChartValueAxis>
+                    <DxChartAxisTitle Text="@ChartSource.YAxixDisplayName" />
+                    <DxChartAxisLabel Format="ChartAxisLabelFormat.Currency" />
+                </DxChartValueAxis>
+                <!--<DxChartTooltip>
+                <div class="p-1">-->
+                @*<p class="text-align-center"><b>@context.Point.SeriesName</b></p>*@
+                <!--<b>@ChartSource.XAxixDisplayName :</b> @context.Point.Argument<br />
+                        <b>@ChartSource.YAxixDisplayName :</b> @context.Point.Value
+                    </div>
+                </DxChartTooltip>-->
+            </DxChart>
+        </div>
+    </div>
+
+}
+else if (ChartSource.ChartType == "Bar")
+{
+    <div class="card" style="box-shadow: 5px 10px 18px #888888; border-radius: 20px;height:100%">
+        <div class="card-header">
+            <div class="row">
+                <div class="col-12" style="font-weight:bold;text-align:center">@ChartSource.Title</div>
+
+            </div>
+        </div>
+        @if (ChartSource.IsFilterOn == 1)
+        {
+            <div class="card-footer">
+                <FilterComponent ChartSource="@ChartSource" DropDownChange="@UpdateChart" Submite="@DateRange"></FilterComponent>
+            </div>
+        }
+        <div class="card-body">
+
+            <DxChart Data="@updateedDataSource" Rotated="true" LabelOverlap="ChartLabelOverlap.Hide" CustomizeSeriesPoint="@PreparePointBARLabel">
+                <div class="row">
+                    <div style="width:150px">
+                        <DxCheckBox CssClass="w-100" @bind-Checked="@IsLableShow" Alignment="CheckBoxContentAlignment.Left" LabelPosition="LabelPosition.Right">Show Label</DxCheckBox>
+                    </div>
+                    <div style="width:65px;align-content:end">
+                        <DxButton CssClass="w-100" RenderStyle="ButtonRenderStyle.Info" SizeMode="SizeMode.Small" Text="Refresh" IconCssClass="redo" IconPosition="ButtonIconPosition.BeforeText" Click="()=>RefreshChartData()" />
+                    </div>
+                </div>
+                <DxChartBarSeries Name="@ChartSource.Label1" ValueField="@((DataClass i) => i.YData1)" ArgumentField="@(i => i.XData)" AggregationMethod="@Enumerable.Sum">
+                    <DxChartSeriesPoint Visible="@IsLableShow" />
+                </DxChartBarSeries>
+                @if (ChartSource.Label2 != null)
+                {<DxChartBarSeries Name="@ChartSource.Label2" ValueField="@((DataClass i) => i.YData2)" ArgumentField="@(i => i.XData)" AggregationMethod="@Enumerable.Sum">
+                        <DxChartSeriesPoint Visible="@IsLableShow" />
+                    </DxChartBarSeries>
+                }
+                @if (ChartSource.Label3 != null)
+                {<DxChartBarSeries Name="@ChartSource.Label3" ValueField="@((DataClass i) => i.YData3)" ArgumentField="@(i => i.XData)" AggregationMethod="@Enumerable.Sum">
+                        <DxChartSeriesPoint Visible="@IsLableShow" />
+                    </DxChartBarSeries>
+                }
+                @if (ChartSource.Label4 != null)
+                {<DxChartBarSeries Name="@ChartSource.Label4" ValueField="@((DataClass i) => i.YData4)" ArgumentField="@(i => i.XData)" AggregationMethod="@Enumerable.Sum">
+                        <DxChartSeriesPoint Visible="@IsLableShow" />
+                    </DxChartBarSeries>
+                }
+                @if (ChartSource.Label5 != null)
+                {<DxChartBarSeries Name="@ChartSource.Label5" ValueField="@((DataClass i) => i.YData4)" ArgumentField="@(i => i.XData)" AggregationMethod="@Enumerable.Sum">
+                        <DxChartSeriesPoint Visible="@IsLableShow" />
+                    </DxChartBarSeries>
+                }
+
+
+                <DxChartLegend Visible="@Convert.ToBoolean(ChartSource.LegendVisible)" Position="@((RelativePosition)ChartSource.LegendRelativePosition)" Orientation="@((DevExpress.Blazor.Orientation)ChartSource.LegendOrientation)" HorizontalAlignment="@((HorizontalAlignment)ChartSource.LegendHorizontalAlignment)" VerticalAlignment="@((VerticalEdge)ChartSource.LegendVerticalEdge)" AllowToggleSeries="@(Convert.ToBoolean(ChartSource.LegendVisible))" />
+                <DxChartArgumentAxis>
+                    <DxChartAxisTitle Text="@ChartSource.XAxixDisplayName" />
+                </DxChartArgumentAxis>
+                <DxChartValueAxis>
+                    <DxChartAxisTitle Text="@ChartSource.YAxixDisplayName" />
+                </DxChartValueAxis>
+                <DxChartTooltip>
+                    <div class="p-1">
+                        <b>@ChartSource.XAxixDisplayName :</b> @context.Point.Argument<br />
+                        <b>@ChartSource.YAxixDisplayName :</b> @context.Point.Value
+                    </div>
+                </DxChartTooltip>
+            </DxChart>
+        </div>
+    </div>
+}
+else if (ChartSource.ChartType == "Pie")
+{
+    <div class="card" style="box-shadow: 5px 10px 18px #888888; border-radius: 20px;height:100%">
+        <div class="card-header">
+            <div class="row">
+                <div class="col-12" style="font-weight:bold;text-align:center">@ChartSource.Title</div>
+
+            </div>
+        </div>
+        @if (ChartSource.IsFilterOn == 1)
+        {
+            <div class="card-footer">
+                <FilterComponent ChartSource="@ChartSource" DropDownChange="@UpdateChart" Submite="@DateRange"></FilterComponent>
+            </div>
+        }
+        <div class="card-body">
+
+            <DxChart Data="@updateedDataSource" LabelOverlap="ChartLabelOverlap.Hide" CustomizeSeriesPoint="@PreparePointPaiLabel"
+                     CssClass="mw-1100">
+                <div class="row">
+                    <div style="width:150px">
+                        <DxCheckBox CssClass="w-100" @bind-Checked="@IsLableShow" Alignment="CheckBoxContentAlignment.Left" LabelPosition="LabelPosition.Right">Show Label</DxCheckBox>
+                    </div>
+                    <div style="width:65px;align-content:end">
+                        <DxButton CssClass="w-100" RenderStyle="ButtonRenderStyle.Info" SizeMode="SizeMode.Small" Text="Refresh" IconCssClass="redo" IconPosition="ButtonIconPosition.BeforeText" Click="()=>RefreshChartData()" />
+                    </div>
+                </div>
+                <DxChartLegend Visible="@Convert.ToBoolean(ChartSource.LegendVisible)" Position="@((RelativePosition)ChartSource.LegendRelativePosition)" Orientation="@((DevExpress.Blazor.Orientation)ChartSource.LegendOrientation)" HorizontalAlignment="@((HorizontalAlignment)ChartSource.LegendHorizontalAlignment)" VerticalAlignment="@((VerticalEdge)ChartSource.LegendVerticalEdge)" AllowToggleSeries="@(Convert.ToBoolean(ChartSource.LegendVisible))" />
+                <DxChartPieSeries ValueField="@((DataClass i) => i.YData1)" ArgumentField="@(i => i.XData)" AggregationMethod="@Enumerable.Sum">
+                    <DxChartSeriesLabel Visible="@IsLableShow" />
+                </DxChartPieSeries>
+                <DxChartTooltip>
+                    <div class="p-1">
+                        <b>@ChartSource.XAxixDisplayName : @context.Point.Argument</b><br />
+                        @ChartSource.YAxixDisplayName : @context.Point.Value
+                    </div>
+                </DxChartTooltip>
+            </DxChart>
+        </div>
+    </div>
+}
+else if (ChartSource.ChartType == "Donut")
+{
+    <div class="card" style="box-shadow: 5px 10px 18px #888888; border-radius: 20px;height:100%">
+        <div class="card-header">
+            <div class="row">
+                <div class="col-12" style="font-weight:bold;text-align:center">@ChartSource.Title</div>
+
+            </div>
+        </div>
+        @if (ChartSource.IsFilterOn == 1)
+        {
+            <div class="card-footer">
+                <FilterComponent ChartSource="@ChartSource" DropDownChange="@UpdateChart" Submite="@DateRange"></FilterComponent>
+            </div>
+        }
+        <div class="card-body">
+
+            <DxChart Data="@updateedDataSource" CssClass="mw-1100" LabelOverlap="ChartLabelOverlap.Hide" CustomizeSeriesPoint="@PreparePointPaiLabel">
+                <div class="row">
+                    <div style="width:150px">
+                        <DxCheckBox CssClass="w-100" @bind-Checked="@IsLableShow" Alignment="CheckBoxContentAlignment.Left" LabelPosition="LabelPosition.Right">Show Label</DxCheckBox>
+                    </div>
+                    <div style="width:65px;align-content:end">
+                        <DxButton CssClass="w-100" RenderStyle="ButtonRenderStyle.Info" SizeMode="SizeMode.Small" Text="Refresh" IconCssClass="redo" IconPosition="ButtonIconPosition.BeforeText" Click="()=>RefreshChartData()" />
+                    </div>
+                </div>
+                <DxChartLegend Visible="@Convert.ToBoolean(ChartSource.LegendVisible)" Position="@((RelativePosition)ChartSource.LegendRelativePosition)" Orientation="@((DevExpress.Blazor.Orientation)ChartSource.LegendOrientation)" HorizontalAlignment="@((HorizontalAlignment)ChartSource.LegendHorizontalAlignment)" VerticalAlignment="@((VerticalEdge)ChartSource.LegendVerticalEdge)" AllowToggleSeries="@(Convert.ToBoolean(ChartSource.LegendVisible))" />
+                <DxChartDonutSeries ValueField="@((DataClass i) => i.YData1)" ArgumentField="@(i => i.XData)" AggregationMethod="@Enumerable.Sum">
+                    <DxChartSeriesLabel Visible="@IsLableShow" />
+                </DxChartDonutSeries>
+                <DxChartTooltip>
+                    <div class="p-1">
+                        <b>@ChartSource.XAxixDisplayName</b> : @context.Point.Argument<br />
+                        <b>@ChartSource.YAxixDisplayName : @context.Point.Value</b>
+                    </div>
+                </DxChartTooltip>
+            </DxChart>
+        </div>
+    </div>
+}
+else if (ChartSource.ChartType == "Data")
+{
+    @*<table border="1" cellpadding="10" cellspacing="5" width="100%" height="100%" class="middle-box1" style="box-shadow: 5px 10px 18px #888888; border-radius: 20px;height:100%;border-bottom:0;border-left:0;border-right:0;border-top:0;" @onclick="@((args) => OnClick(ChartSource))">
+            <tr>
+                <th style="font-weight:bold;text-align:center;" colspan="@ChartSource.ColumnDataTable.Columns.Count">
+                    @ChartSource.Title
+                </th>
+            </tr>
+            <tr>
+                @foreach (DataColumn col in ChartSource.ColumnDataTable.Columns)
+                {
+                    <th>
+                        @col.ColumnName
+                    </th>
+                }
+            </tr>
+            @{
+                //To make unique Id
+                foreach (var ChartSources in ChartSource.TableData)
+                {
+                    <tr>
+                        @foreach (KeyValuePair<string, object> itm in ChartSources)
+                        {
+                            <td>@ChartSources.Where(a => a.Key == itm.Key).Select(b => b.Value).FirstOrDefault()</td>
+                        }
+                    </tr>
+                }
+            }
+        </table>*@
+
+    <div class="card" style="box-shadow: 5px 10px 18px #888888; border-radius: 20px;height:100%;">
+        <div class="card-header">
+            <div style="font-weight:bold;text-align:center">@ChartSource.Title</div>
+        </div>
+        <div class="card-body">
+            <div class="d-table w-100 h-100 overflow-x:auto;">
+                <div class="d-table-row text-center align-self-center">
+                    @foreach (DataColumn col in ChartSource.ColumnDataTable.Columns)
+                    {
+                        <div class="d-table-cell border-bottom p-1">
+                            @col.ColumnName
+                        </div>
+                    }
+                </div>
+                @{
+                    //To make unique Id
+                    foreach (var ChartSources in ChartSource.TableData)
+                    {
+                        <div class="d-table-row text-center align-self-center">
+                            @foreach (KeyValuePair<string, object> itm in ChartSources)
+                            {
+                                <div class="d-table-cell border-bottom p-1">@ChartSources.Where(a => a.Key == itm.Key).Select(b => b.Value).FirstOrDefault()</div>
+                            }
+                        </div>
+                    }
+                }
+            </div>
+        </div>
+    </div>
+}
+else if (ChartSource.ChartType == "CardData")
+{
+    string Colour = ChartSource.CardBgColor == "white" ? "black" : "white";
+    <div class="middle-box1" style="height: 100%;font-weight: bold; color: @Colour;box-shadow: 5px 10px 18px #888888; border-radius: 20px; background-color: @ChartSource.CardBgColor">
+        <b><span>@ChartSource.Title</span></b><br />
+        <b><span>@ChartSource.YAxixValueColumnName1</span></b>
+    </div>
+    @*</div>*@
+}
+else if (ChartSource.ChartType == "Common")
+{
+    <div class="card" style="box-shadow: 5px 10px 18px #888888; border-radius: 20px;height:100%">
+        <div class="card-header">
+            <div class="row">
+                <div class="col-12" style="font-weight:bold;text-align:center">@ChartSource.Title</div>
+
+            </div>
+        </div>
+        @if (ChartSource.IsFilterOn == 1)
+        {
+            <div class="card-footer">
+                <FilterComponent ChartSource="@ChartSource" DropDownChange="@UpdateChart" Submite="@DateRange"></FilterComponent>
+            </div>
+        }
+        <div class="card-body">
+
+            <DxChart Data="@updateedDataSource" LabelOverlap="ChartLabelOverlap.Hide" CustomizeSeriesPoint="@PreparePointBARLabel"
+                     CssClass="mw-1100">
+                <div class="row">
+                    <div style="width:150px">
+                        <DxCheckBox CssClass="w-100" @bind-Checked="@IsLableShow" Alignment="CheckBoxContentAlignment.Left" LabelPosition="LabelPosition.Right">Show Label</DxCheckBox>
+                    </div>
+                    <div style="width:65px;align-content:end">
+                        <DxButton CssClass="w-100" RenderStyle="ButtonRenderStyle.Info" SizeMode="SizeMode.Small" Text="Refresh" IconCssClass="redo" IconPosition="ButtonIconPosition.BeforeText" Click="()=>RefreshChartData()" />
+                    </div>
+                </div>
+                <DxChartCommonSeries NameField="@((DataClass s) => s.GropKey)" ArgumentField="@((DataClass s) => s.XData)"
+                                     ValueField="@((DataClass s) => s.YData1)"
+                                     SeriesType="@ChartSeriesTyp">
+                </DxChartCommonSeries>
+                <DxChartLegend Visible="@Convert.ToBoolean(ChartSource.LegendVisible)" Position="@((RelativePosition)ChartSource.LegendRelativePosition)" Orientation="@((DevExpress.Blazor.Orientation)ChartSource.LegendOrientation)" HorizontalAlignment="@((HorizontalAlignment)ChartSource.LegendHorizontalAlignment)" VerticalAlignment="@((VerticalEdge)ChartSource.LegendVerticalEdge)" AllowToggleSeries="@(Convert.ToBoolean(ChartSource.LegendVisible))">
+                    <DxChartTitle>
+                        <DxChartSubTitle></DxChartSubTitle>
+                    </DxChartTitle>
+                </DxChartLegend>
+                <DxChartArgumentAxis>
+                    <DxChartAxisTitle Text="@ChartSource.XAxixDisplayName" />
+                </DxChartArgumentAxis>
+                <DxChartValueAxis>
+                    <DxChartAxisTitle Text="@ChartSource.YAxixDisplayName" />
+                </DxChartValueAxis>
+                <DxChartTooltip>
+                    <div class="p-1">
+                        <b>@ChartSource.XAxixDisplayName :</b> @context.Point.Argument<br />
+                        <b>@ChartSource.YAxixDisplayName :</b> @context.Point.Value
+                    </div>
+                </DxChartTooltip>
+            </DxChart>
+        </div>
+    </div>
+}
+else if (ChartSource.ChartType == "MultiAxis")
+{
+    <div class="card" style="box-shadow: 5px 10px 18px #888888; border-radius: 20px;height:100%">
+        <div class="card-header">
+            <div class="row">
+                <div class="col-12" style="font-weight:bold;text-align:center">@ChartSource.Title</div>
+
+            </div>
+        </div>
+        @if (ChartSource.IsFilterOn == 1)
+        {
+            <div class="card-footer">
+                <FilterComponent ChartSource="@ChartSource" DropDownChange="@UpdateChart" Submite="@DateRange"></FilterComponent>
+            </div>
+        }
+        <div class="card-body">
+
+            <DxChart Data="updateedDataSource"
+                     CssClass="mw-1100">
+                <DxChartLegend Visible="@Convert.ToBoolean(ChartSource.LegendVisible)" Position="@((RelativePosition)ChartSource.LegendRelativePosition)" Orientation="@((DevExpress.Blazor.Orientation)ChartSource.LegendOrientation)" HorizontalAlignment="@((HorizontalAlignment)ChartSource.LegendHorizontalAlignment)" VerticalAlignment="@((VerticalEdge)ChartSource.LegendVerticalEdge)" AllowToggleSeries="@(Convert.ToBoolean(ChartSource.LegendVisible))" />
+                <DxChartValueAxis>
+                    <DxChartAxisTitle Text="@ChartSource.YAxixDisplayName"></DxChartAxisTitle>
+                </DxChartValueAxis>
+                <DxChartValueAxis Name="TotalAxis" Position="HorizontalEdge.Right">
+                    <DxChartAxisTitle Text="@ChartSource.Label4"></DxChartAxisTitle>
+                </DxChartValueAxis>
+                <DxChartArgumentAxis>
+                    <DxChartAxisTitle Text="@ChartSource.XAxixDisplayName"></DxChartAxisTitle>
+                </DxChartArgumentAxis>
+                @if (ChartSource.Label1 != null)
+                {<DxChartFullStackedBarSeries Name="@ChartSource.Label1"
+                                              Filter="@((DataClass s) => s.GropKey == ChartSource.Label1)"
+                                              AggregationMethod="Enumerable.Sum"
+                                              ArgumentField="@(s => s.XData)"
+                                              ValueField="@(s => s.YData1)" />}
+                @if (ChartSource.Label2 != null)
+                {<DxChartFullStackedBarSeries Name="@ChartSource.Label2"
+                                              Filter="@((DataClass s) => s.GropKey == ChartSource.Label2)"
+                                              AggregationMethod="Enumerable.Sum"
+                                              ArgumentField="@(s => s.XData)"
+                                              ValueField="@(s => s.YData1)" />}
+                @if (ChartSource.Label3 != null)
+                {<DxChartFullStackedBarSeries Name="@ChartSource.Label3"
+                                              Filter="@((DataClass s) => s.GropKey == ChartSource.Label3)"
+                                              AggregationMethod="Enumerable.Sum"
+                                              ArgumentField="@(s => s.XData)"
+                                              ValueField="@(s => s.YData1)" />}
+                @if (ChartSource.Label4 != null)
+                {<DxChartSplineSeries Name="@ChartSource.Label4"
+                                      AggregationMethod="Enumerable.Sum"
+                                      ArgumentField="@((DataClass s) => s.XData)"
+                                      ValueField="@(s => s.YData1)"
+                                      Axis="TotalAxis" />}
+            </DxChart>
+        </div>
+    </div>
+
+}
+else if (ChartSource.ChartType == "Bubble")
+{
+    <div class="card" style="box-shadow: 5px 10px 18px #888888; border-radius: 20px;height:100%">
+        <div class="card-header">
+            <div class="row">
+                <div class="col-12" style="font-weight:bold;text-align:center">@ChartSource.Title</div>
+
+            </div>
+        </div>
+        @if (ChartSource.IsFilterOn == 1)
+        {
+            <div class="card-footer">
+                <FilterComponent ChartSource="@ChartSource" DropDownChange="@UpdateChart" Submite="@DateRange"></FilterComponent>
+            </div>
+        }
+        <div class="card-body">
+            <DxChart Data="@updateedDataSource">
+                <DxChartTooltip>
+                    @context.GetBubblePoint().Render((bubblePoint) =>
+                                                                                                                                                                @<div class="p-3">
+                                                                                                                                                                    <p>@ChartSource.XAxixDisplayName: @bubblePoint.Argument</p>
+                                                                                                                                                                    <p>@ChartSource.YAxixDisplayName: @bubblePoint.Value</p>
+                                                                                                                                                                    <p>Size: @bubblePoint.Size</p>
+                                                                                                                                                                </div>
+)
+                </DxChartTooltip>
+                @if (ChartSource.Label1 != null)
+                {<DxChartBubbleSeries Name="@ChartSource.Label1" Filter="@((DataClass s) => s.GropKey == ChartSource.Label1)"
+                                      ArgumentField="@((DataClass s) => s.XData)"
+                                      ValueField="@(s => s.YData1)"
+                                      SizeField="@(s => s.YData2)"
+                                      Color="@System.Drawing.Color.Red"
+                                      AggregationMethod="Enumerable.Max" />}
+                @if (ChartSource.Label2 != null)
+                {<DxChartBubbleSeries Name="@ChartSource.Label2" Filter="@((DataClass s) => s.GropKey == ChartSource.Label2)"
+                                      ArgumentField="@((DataClass s) => s.XData)"
+                                      ValueField="@(s => s.YData1)"
+                                      SizeField="@(s => s.YData2)"
+                                      Color="@System.Drawing.Color.Gray"
+                                      AggregationMethod="Enumerable.Max" />}
+                @if (ChartSource.Label3 != null)
+                {<DxChartBubbleSeries Name="@ChartSource.Label3" Filter="@((DataClass s) => s.GropKey == ChartSource.Label3)"
+                                      ArgumentField="@((DataClass s) => s.XData)"
+                                      ValueField="@(s => s.YData1)"
+                                      SizeField="@(s => s.YData2)"
+                                      Color="@System.Drawing.Color.Brown"
+                                      AggregationMethod="Enumerable.Max" />}
+                @if (ChartSource.Label4 != null)
+                {<DxChartBubbleSeries Name="@ChartSource.Label4" Filter="@((DataClass s) => s.GropKey == ChartSource.Label4)"
+                                      ArgumentField="@((DataClass s) => s.XData)"
+                                      ValueField="@(s => s.YData1)"
+                                      SizeField="@(s => s.YData2)"
+                                      Color="@System.Drawing.Color.Blue"
+                                      AggregationMethod="Enumerable.Max" />}
+                @if (ChartSource.Label5 != null)
+                {<DxChartBubbleSeries Name="@ChartSource.Label4" Filter="@((DataClass s) => s.GropKey == ChartSource.Label5)"
+                                      ArgumentField="@((DataClass s) => s.XData)"
+                                      ValueField="@(s => s.YData1)"
+                                      SizeField="@(s => s.YData2)"
+                                      Color="@System.Drawing.Color.Green"
+                                      AggregationMethod="Enumerable.Max" />}
+                <DxChartLegend Visible="@Convert.ToBoolean(ChartSource.LegendVisible)" Position="@((RelativePosition)ChartSource.LegendRelativePosition)" Orientation="@((DevExpress.Blazor.Orientation)ChartSource.LegendOrientation)" HorizontalAlignment="@((HorizontalAlignment)ChartSource.LegendHorizontalAlignment)" VerticalAlignment="@((VerticalEdge)ChartSource.LegendVerticalEdge)" AllowToggleSeries="@(Convert.ToBoolean(ChartSource.LegendVisible))" />
+                <DxChartValueAxis>
+                    <DxChartAxisTitle Text="@ChartSource.YAxixDisplayName"></DxChartAxisTitle>
+                    <DxChartAxisLabel Format="ChartAxisLabelFormat.FixedPoint"></DxChartAxisLabel>
+                </DxChartValueAxis>
+                <DxChartArgumentAxis>
+                    <DxChartAxisTitle Text="@ChartSource.XAxixDisplayName"></DxChartAxisTitle>
+
+
+                </DxChartArgumentAxis>
+
+            </DxChart>
+        </div>
+    </div>
+}
+else if (ChartSource.ChartType == "Scatter")
+{
+    <div class="card" style="box-shadow: 5px 10px 18px #888888; border-radius: 20px;height:100%">
+        <div class="card-header">
+            <div class="row">
+                <div class="col-12" style="font-weight:bold;text-align:center">@ChartSource.Title</div>
+
+            </div>
+        </div>
+        @if (ChartSource.IsFilterOn == 1)
+        {
+            <div class="card-footer">
+                <FilterComponent ChartSource="@ChartSource" DropDownChange="@UpdateChart" Submite="@DateRange"></FilterComponent>
+            </div>
+        }
+        <div class="card-body">
+            <DxChart Data="@updateedDataSource">
+                @if (ChartSource.Label1 != null)
+                {<DxChartScatterSeries Name="@ChartSource.Label1" Filter="@((DataClass s) => s.GropKey == ChartSource.Label1)" ArgumentField="@(s => s.XData)" ValueField="@(s => s.YData1)" />}
+                @if (ChartSource.Label2 != null)
+                {<DxChartScatterSeries Name="@ChartSource.Label2" Filter="@((DataClass s) => s.GropKey == ChartSource.Label2)" ArgumentField="@(s => s.XData)" ValueField="@(s => s.YData1)" />}
+                @if (ChartSource.Label3 != null)
+                {<DxChartScatterSeries Name="@ChartSource.Label3" Filter="@((DataClass s) => s.GropKey == ChartSource.Label3)" ArgumentField="@(s => s.XData)" ValueField="@(s => s.YData1)" />}
+                @if (ChartSource.Label4 != null)
+                {<DxChartScatterSeries Name="@ChartSource.Label3" Filter="@((DataClass s) => s.GropKey == ChartSource.Label4)" ArgumentField="@(s => s.XData)" ValueField="@(s => s.YData1)" />}
+                @if (ChartSource.Label5 != null)
+                {<DxChartScatterSeries Name="@ChartSource.Label3" Filter="@((DataClass s) => s.GropKey == ChartSource.Label5)" ArgumentField="@(s => s.XData)" ValueField="@(s => s.YData1)" />}
+                <DxChartLegend Position="RelativePosition.Outside" HorizontalAlignment="HorizontalAlignment.Right" />
+                <DxChartValueAxis>
+                    <DxChartAxisTitle Text="@ChartSource.YAxixDisplayName"></DxChartAxisTitle>
+                </DxChartValueAxis>
+                <DxChartArgumentAxis>
+                    <DxChartAxisTitle Text="@ChartSource.XAxixDisplayName"></DxChartAxisTitle>
+                </DxChartArgumentAxis>
+                <DxChartLegend Visible="@Convert.ToBoolean(ChartSource.LegendVisible)" Position="@((RelativePosition)ChartSource.LegendRelativePosition)" Orientation="@((DevExpress.Blazor.Orientation)ChartSource.LegendOrientation)" HorizontalAlignment="@((HorizontalAlignment)ChartSource.LegendHorizontalAlignment)" VerticalAlignment="@((VerticalEdge)ChartSource.LegendVerticalEdge)" AllowToggleSeries="@(Convert.ToBoolean(ChartSource.LegendVisible))" />
+            </DxChart>
+        </div>
+    </div>
+}
+
+
+@code {
+
+    [Inject]
+    public IDynamicAPIService dynamicAPIService { get; set; }
+    string Width = string.Empty;
+    List<DataClass> updateedDataSource = new List<DataClass>();
+    IEnumerable<ChartSeriesType> ChartSeriesTypes = Enum.GetValues(typeof(ChartSeriesType)).Cast<ChartSeriesType>();
+    ChartSeriesType ChartSeriesTyp;
+
+    [Parameter]
+    public GetRequestConfiguration ChartSource { get; set; }
+    [Parameter]
+    public EventCallback<GetRequestConfiguration> Click { get; set; }
+
+    static bool Istooltip = true;
+    string tooltip = Istooltip == true ? "block" : "none";
+    protected override async Task OnInitializedAsync()
+    {
+        updateedDataSource = ChartSource.ChartData;
+        ChartSeriesTyp = ((ChartSeriesType)ChartSource.CommanSeries);
+        //LegendPropertiesSet
+        DevExpress.Blazor.Orientation _Orientation = (DevExpress.Blazor.Orientation)ChartSource.LegendOrientation;
+        RelativePosition _RelativePosition = (RelativePosition)ChartSource.LegendRelativePosition;
+        HorizontalAlignment _HorizontalAlignment = (HorizontalAlignment)ChartSource.LegendHorizontalAlignment;
+        VerticalEdge _VerticalEdge = (VerticalEdge)ChartSource.LegendVerticalEdge;
+        bool _AllowToggleSeries = Convert.ToBoolean(ChartSource.LegendAllowToggleSeries);
+        bool _Visible = Convert.ToBoolean(ChartSource.LegendVisible);
+    }
+
+    void OnClick(GetRequestConfiguration args)
+    {
+        Click.InvokeAsync(args);
+    }
+
+    void UpdateChart(List<DataClass> arge)
+    {
+        updateedDataSource = arge;
+    }
+
+    void DateRange(List<DataClass> arge)
+    {
+        updateedDataSource = arge;
+    }
+    bool IsLableShow = false;
+
+    protected void PreparePointBARLabel(ChartSeriesPointCustomizationSettings pointSettings)
+    {
+        pointSettings.PointLabel.Visible = IsLableShow;
+        pointSettings.PointAppearance.Symbol = ChartPointSymbol.Circle;
+        pointSettings.PointLabel.Position = RelativePosition.Inside;
+        pointSettings.PointAppearance.Size = 0;
+    }
+
+    protected void PreparePointPaiLabel(ChartSeriesPointCustomizationSettings pointSettings)
+    {
+        pointSettings.PointLabel.Visible = IsLableShow;
+        pointSettings.PointAppearance.Symbol = ChartPointSymbol.Circle;
+        pointSettings.PointLabel.Position = RelativePosition.Outside;
+        pointSettings.PointLabel.Connector.Visible = IsLableShow;
+        pointSettings.PointLabel.Connector.Width = 3;
+    }
+
+    protected async Task RefreshChartData()
+    {
+        Param prm2 = new Param { IsSp = 0, QueryOrSp = ChartSource.QueryOrSp };
+        string strDdl = await dynamicAPIService.GetDatabyParam(StaticDataSource.MenuItem.ConnectionString, StaticDataSource.MenuItem.ProviderName, prm2);
+        var response = JsonConvert.DeserializeObject<OutputData>(strDdl);
+        var newresponse = new ObservableCollection<ExpandoObject>(response.DynamicData);
+        List<DataClass> chartDataList = new List<DataClass>();
+
+        foreach (var input in newresponse)
+        {
+            DataClass row = new DataClass();
+            foreach (KeyValuePair<string, object> itm in input)
+            {
+                // Create a new dynamic ExpandoObject
+                if (itm.Key.ToString() == ChartSource.XAxixValueColumnName)
+                    row.XData = itm.Value.ToString();
+                else if (itm.Key.ToString() == ChartSource.YAxixValueColumnName1)
+                    row.YData1 = (itm.Value == null) ? 0 : Convert.ToDouble((itm.Value.ToString()));
+                else if (itm.Key.ToString() == ChartSource.YAxixValueColumnName2)
+                    row.YData2 = (itm.Value == null) ? 0 : Convert.ToDouble((itm.Value.ToString()));
+                else if (itm.Key.ToString() == ChartSource.YAxixValueColumnName3)
+                    row.YData3 = (itm.Value == null) ? 0 : Convert.ToDouble((itm.Value.ToString()));
+                else if (itm.Key.ToString() == ChartSource.YAxixValueColumnName4)
+                    row.YData4 = (itm.Value == null) ? 0 : Convert.ToDouble((itm.Value.ToString()));
+                else if (itm.Key.ToString() == ChartSource.YAxixValueColumnName5)
+                    row.YData5 = (itm.Value == null) ? 0 : Convert.ToDouble((itm.Value.ToString()));
+                if (ChartSource.ChartType == "Scatter" || ChartSource.ChartType == "Common" || ChartSource.ChartType == "Bubble" || ChartSource.ChartType == "MultiAxis")
+                {
+                    if (itm.Key.ToString() == ChartSource.GroupKey)
+                        row.GropKey = itm.Value.ToString();
+                }
+            }
+            chartDataList.Add(row);
+        }
+
+        ChartSource.ChartData = chartDataList;
+        updateedDataSource = chartDataList;
+        //StateHasChanged();
+    }
+}

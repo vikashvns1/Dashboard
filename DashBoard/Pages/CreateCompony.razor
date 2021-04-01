@@ -1,0 +1,261 @@
+﻿@page "/CreateCompony"
+@using DashBoardModel
+@using Microsoft.Extensions.Configuration
+@inject IConfiguration  _configuration
+@inject Radzen.DialogService dialogService
+
+<RadzenTemplateForm Data="@CompData" Submit="@((CompanyProfile args) => { Submit(args); })">
+    <div class="col-12">
+        <div class="row">
+            <div class="co-12">
+                <RadzenFieldset Text="Details">
+                    <div class="row">
+                        <div class="col-6 p1 pb-5">
+                            <table border="0" width="100%">
+                                <tr>
+                                    <td align="left" width="50%">
+                                        <label>User Id : </label>
+                                    </td>
+                                    <td align="left" width="50%">
+                                        <RadzenTextBox @bind-Value="@CompData.UserId"  Name="UserId" Style="width:100%;display:block"></RadzenTextBox>
+                                        <RadzenRequiredValidator Component="UserId" Text="UserId is required" Popup="true" Style="position: absolute" />
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                        <div class="col-6 p1 pb-5">
+                            <table border="0" width="100%">
+                                <tr>
+                                    <td align="left" width="50%">
+                                        <label>Password : </label>
+                                    </td>
+                                    <td align="left" width="50%">
+                                        <RadzenTextBox @bind-Value="@CompData.Password" Name="Password" Style="width:100%;"></RadzenTextBox>
+                                        <RadzenRequiredValidator Component="Password" Text="Password is required" Popup="true" Style="position: absolute" />
+
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-6 p1 pb-5">
+                            <table border="0" width="100%">
+                                <tr>
+                                    <td align="left" width="50%">
+                                        <label>User Name : </label>
+                                    </td>
+                                    <td align="left" width="50%">
+                                        <RadzenTextBox @bind-Value="@CompData.Name" Name="Name" Style="width:100%;"></RadzenTextBox>
+                                        <RadzenRequiredValidator Component="Name" Text="Name is required" Popup="true" Style="position: absolute" />
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                        <div class="col-6 p1 pb-5">
+                            <table border="0" width="100%">
+                                <tr>
+                                    <td align="left" width="50%">
+                                        <label>Address : </label>
+                                    </td>
+                                    <td align="left" width="50%">
+                                        <RadzenTextBox @bind-Value="@CompData.Address" Style="width:100%;"></RadzenTextBox>
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-6 p1 pb-5">
+                            <table border="0" width="100%">
+                                <tr>
+                                    <td align="left" width="50%">
+                                        <label>Contact Person : </label>
+                                    </td>
+                                    <td align="left" width="50%">
+                                        <RadzenTextBox @bind-Value="@CompData.ContactPerson" Style="width:100%;"></RadzenTextBox>
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                        <div class="col-6 p1 pb-5">
+                            <table border="0" width="100%">
+                                <tr>
+                                    <td align="left" width="50%">
+                                        <label>Contanct Number : </label>
+                                    </td>
+                                    <td align="left" width="50%">
+                                        <RadzenTextBox @bind-Value="@CompData.ContanctNumber" Name="ContanctNumber" Style="width:100%;"></RadzenTextBox>
+                                        <RadzenLengthValidator Component="ContanctNumber" Min="10" Max="10" Text="ContanctNumber should be at least 10 Digit" Popup="true" Style="position: absolute" />
+
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-6 p1 pb-5">
+                            <table border="0" width="100%">
+                                <tr>
+                                    <td align="left" width="50%">
+                                        <label>ImageName : </label>
+                                    </td>
+                                    <td align="left" width="50%">
+                                        <RadzenTextBox @bind-Value="@CompData.ImageName" Style="width:100%;"></RadzenTextBox>
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                        <div class="col-6 p1 pb-5">
+                            <table border="0" width="100%">
+                                <tr>
+                                    <td align="left" width="50%">
+                                        <label>ImageUrl : </label>
+                                    </td>
+                                    <td align="left" width="50%">
+                                        <RadzenTextBox @bind-Value="@CompData.ImageUrl" Style="width:100%;"></RadzenTextBox>
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-6 p1 pb-5">
+                            <table border="0" width="100%">
+                                <tr>
+                                    <td align="left" width="50%">
+                                        <label>Header Color Code : </label>
+                                    </td>
+                                    <td align="left" width="50%">
+                                        <RadzenTextBox @bind-Value="@CompData.BgColorCode" Style="width:100%;"></RadzenTextBox>
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                        <div class="col-6 p1 pb-5">
+                            <table border="0" width="100%">
+                                <tr>
+                                    <td align="left" width="50%">
+                                        <label>EmailId : </label>
+                                    </td>
+                                    <td align="left" width="50%">
+                                        <RadzenTextBox @bind-Value="@CompData.EmailId" Name="EmailId" Style="width:100%;"></RadzenTextBox>
+                                        <RadzenEmailValidator Component="EmailId" Text="Provide a valid email address" Popup="true" Style="position: absolute" />
+
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                </RadzenFieldset>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-12">
+            <RadzenFieldset Text="Database Connection">
+                <div class="row">
+                    <div class="col-8 align-content-center p1 pb-5">
+                        <label style="font-weight:bold">Connection String : </label>
+                        <RadzenTextBox Style="width:100%;" @bind-Value="@CompData.ConnectionString" Name="ConnectionString"></RadzenTextBox>
+                        <RadzenRequiredValidator Component="ConnectionString" Text="ConnectionString is required" Popup="true" Style="position: absolute" />
+
+                    </div>
+                    <div class="col-4 align-content-end p1 pb-5">
+                        <label style="font-weight:bold">Provider : </label>
+                        <RadzenTextBox @bind-Value="@CompData.ProviderName" Style="width:100%;"></RadzenTextBox>
+                    </div>
+                </div>
+            </RadzenFieldset>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-12">
+            <RadzenFieldset Text="Acoount">
+                <div class="row">
+                    <div class="col-4 p1">
+                        <table border="0" width="100%">
+                            <tr>
+                                <td align="left" width="50%">
+                                    <label>Active : </label>
+                                </td>
+                                <td align="left" width="50%">
+                                    <select id="select-box" @bind="@CompData.Active" style="width:100%">
+                                        <option value="0">Inactive</option>
+                                        <option value="1">Active</option>
+                                    </select>
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                    <div class="col-4 p1">
+                        <table border="0" width="100%">
+                            <tr>
+                                <td align="left" width="50%">
+                                    <label>Paid : </label>
+                                </td>
+                                <td align="left" width="50%">
+                                    <select id="select-box" @bind="@CompData.Paid" style="width:100%">
+                                        <option>Paid</option>
+                                        <option>Unpaid</option>
+                                    </select>
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                    <div class="col-4 p1">
+                        <table border="0" width="100%">
+                            <tr>
+                                <td align="left" width="50%">
+                                    <label>Plan : </label>
+                                </td>
+                                <td align="left" width="50%">
+                                    <select id="select-box" @bind="@CompData.Plan" style="width:100%">
+                                        <option>Premium</option>
+                                        <option>Gold</option>
+                                        <option>Silver</option>
+                                    </select>
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+            </RadzenFieldset>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-12 p2">
+            <RadzenFieldset Style="border:0px;">
+                <div class="row">
+                    <div class="col-12 d-flex align-items-end justify-content-end m-2">
+                        <RadzenButton ButtonType="ButtonType.Submit" Icon="save" Text="Save" />
+                        <RadzenButton ButtonStyle="ButtonStyle.Light" Icon="cancel" style="display: inline-block; margin-left: 10px;" Text="Cancel" Click="@Cancel" />
+                    </div>
+                </div>
+            </RadzenFieldset>
+        </div>
+    </div>
+</RadzenTemplateForm>
+
+@code {
+    [Inject]
+    public IDynamicAPIService dynamicAPIService { get; set; }
+    CompanyProfile CompData = new CompanyProfile();
+
+    async Task Submit(CompanyProfile CompProp)
+    {
+        string conn = _configuration.GetConnectionString("DashBoardConnection");
+        int i = await dynamicAPIService.InsertEditCustomer(conn, CompProp);
+        CompProp.Id = i;
+        StaticDataSource.AdminData.Add(CompProp);
+        StateHasChanged();
+
+        dialogService.Close(CompProp);
+    }
+
+    void Cancel()
+    {
+        dialogService.Close(true);
+    }
+
+}

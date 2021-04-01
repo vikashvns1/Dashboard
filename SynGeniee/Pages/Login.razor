@@ -1,0 +1,95 @@
+﻿@layout LoginLayout
+@page "/"
+@using DashBoardModel
+@inject NavigationManager navigationManager
+@inject AuthenticationStateProvider  authenticationStateProvider
+@using Microsoft.Extensions.Configuration
+@inject IConfiguration  _configuration
+@using Newtonsoft.Json;
+@using Syncfusion.Blazor.Cards
+@using Syncfusion.Blazor.Buttons
+@using System.Collections.ObjectModel;
+
+<div class="container-fluid" style="width :100%">
+    <div class="col-12">
+        <h2>Login to your account</h2>
+        <EditForm Model="model" OnValidSubmit="LoginUser">
+            <RadzenCard>
+                <AlertMessage Message="@message" MessageType="@messageType" />
+                <DataAnnotationsValidator />
+                <ValidationSummary />
+
+                <label>UserId</label>
+                <RadzenTextBox @bind-Value="model.UserId"></RadzenTextBox>
+
+                <label>Password</label>
+                <RadzenPassword @bind-Value="model.Password"></RadzenPassword>
+
+                <hr />
+                <RadzenButton ButtonType="Radzen.ButtonType.Submit" Text="Login"
+                              ButtonStyle="Radzen.ButtonStyle.Primary" class="btn-block mr-2"
+                              Disabled="isBusy" Style="background-color:#303EA0;color:white" />
+            </RadzenCard>
+        </EditForm>
+    </div>
+</div>
+
+
+@code {
+
+    LoginRequest model = new LoginRequest();
+
+    bool isBusy = false;
+    string message = string.Empty;
+    AlertMessageType messageType = AlertMessageType.Success;
+    [Inject]
+    public IDynamicAPIService dynamicAPIService { get; set; }
+    [Inject]
+    public BrowserService Service { get; set; }
+    protected bool IsFirstLoad = false;
+    public async Task LoginUser()
+    {
+        var dimension = await Service.GetDimensions();
+        StaticDataSource.WindowsHeight = dimension.Height;
+
+        if (IsFirstLoad == false)
+        {
+            string conn = _configuration.GetConnectionString("DashBoardConnection");
+            isBusy = true;
+            string storeProc = "GetComponyInfoById";
+            var result = await dynamicAPIService.GetComponyData(conn, storeProc, model.UserId, model.Password);
+
+            if (result.Id != 0)
+            {
+                if (result.Name == "Admin")
+                {
+                    StaticDataSource.userInfo = result;
+                    navigationManager.NavigateTo("/Admin");
+                }
+                else
+                {
+                    StaticDataSource.userInfo = result;
+                    var menu = await dynamicAPIService.GetMenuData(conn, StaticDataSource.userInfo.Id);
+                    var _Objmenus = JsonConvert.DeserializeObject<List<DashBoardModel.MenuItem>>(menu);
+                    ObservableCollection<DashBoardModel.MenuItem> Objmenus = new ObservableCollection<DashBoardModel.MenuItem>(_Objmenus.OrderBy(a => a.MenuOrder).ToList());
+
+                    StaticDataSource.MenuItemList = Objmenus;
+
+                    var notificationList = await dynamicAPIService.GetNotificationData(conn, StaticDataSource.userInfo.Id, 0);
+                    List<DashBoardModel.DbNotification> ObjNotification = JsonConvert.DeserializeObject<List<DashBoardModel.DbNotification>>(notificationList);
+
+                    StaticDataSource.NewNotificationCount = ObjNotification.Where(a => a.Status == 0).Count();
+                    StaticDataSource.DbNotificationList = ObjNotification.ToList();
+                    navigationManager.NavigateTo("/Home");
+                }
+                IsFirstLoad = true;
+            }
+            else
+            {
+                message = "UserId and Password are wrong!";
+                messageType = AlertMessageType.Error;
+            }
+            isBusy = false;
+        }
+    }
+}

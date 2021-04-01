@@ -1,0 +1,115 @@
+﻿@page "/ReportComponent"
+@using System.Collections.Generic;
+@using System.Collections.ObjectModel;
+@using System.ComponentModel;
+@using System.Data;
+@using System.Dynamic;
+@using DashBoardModel;
+@using Newtonsoft.Json;
+@using System.IO;
+@inject Microsoft.JSInterop.IJSRuntime JS
+@using System.Web
+@using ClosedXML.Excel;
+@inject Radzen.DialogService dialogService
+@inject NavigationManager NavigationManager
+@using DevExtreme.AspNet.Data
+@using DevExtreme.AspNet.Data.ResponseModel
+@using DevExtreme.AspNet.Data.Helpers;
+@using System.Threading
+@using System.Threading.Tasks
+@using Microsoft.AspNetCore.Http;
+@using Microsoft.AspNetCore.WebUtilities;
+@using Microsoft.Extensions.Primitives;
+
+
+@if (StaticDataSource.chartAttributesList.OrderBy(a => a.ChartOrder).Where(a => a.ChartType == "Report" && a.Id == StaticDataSource.MenuItem.ComponentId).FirstOrDefault().TableData == null)
+{
+<p><em>Loading...</em></p> }
+else
+{
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <div style="font-weight:bold;text-align:center">@StaticDataSource.MenuItem.Menu</div>
+            </div>
+            <div class="card-body">
+                <DxDataGrid @ref="grid" CustomData="LoadRepostData" AllowSort="true" ShowGroupPanel="true" HorizontalScrollBarMode="ScrollBarMode.Auto" VerticalScrollBarMode="ScrollBarMode.Auto"
+                            T="@ExpandoObject" ShowFilterRow="true"
+                            VerticalScrollableHeight="400"
+                            PageSize="1000"
+                            CssClass="mw-1100">
+                    <HeaderTemplate>
+                        <DxToolbar ItemRenderStyleMode="ToolbarRenderStyleMode.Plain" ItemSizeMode="SizeMode.Small">
+                            <DxToolbarItem Text="@RowCount" RenderStyle="ButtonRenderStyle.Light" RenderStyleMode="ToolbarItemRenderStyleMode.Contained" BeginGroup="true" Alignment="ToolbarItemAlignment.Left" />
+                            <DxToolbarItem Text="Export to Excel" RenderStyle="ButtonRenderStyle.Secondary" RenderStyleMode="ToolbarItemRenderStyleMode.Contained" BeginGroup="true" IconCssClass="grid-toolbar-Export" Click="ExportExcel" Alignment="ToolbarItemAlignment.Right" />
+                            <DxToolbarItem Text="Send Mail" RenderStyle="ButtonRenderStyle.Secondary" RenderStyleMode="ToolbarItemRenderStyleMode.Contained" BeginGroup="true" IconCssClass="oi oi-undo" Click="@(args => dialogService.Open<MailSender>("Send Mail", null, new DialogOptions() { Width = "auto", Height = "auto" }))" Alignment="ToolbarItemAlignment.Right" />
+                            <DxDataGridColumnChooserToolbarItem Alignment="ToolbarItemAlignment.Right" BeginGroup="true" />
+                        </DxToolbar>
+                    </HeaderTemplate>
+                    <Columns>
+                        @foreach (DataColumn col in StaticDataSource.chartAttributesList.OrderBy(a => a.ChartOrder).Where(a => a.ChartType == "Report" && a.Id == StaticDataSource.MenuItem.ComponentId).FirstOrDefault().ColumnDataTable.Columns)
+                        {
+
+                            switch (col.DataType.FullName)
+                            {
+                                case "System.Int32":
+    <DxDataGridSpinEditColumn Field="@col.ToString()"></DxDataGridSpinEditColumn> break;
+case "System.DateTime":
+<DxDataGridDateEditColumn Field="@col.ToString()"></DxDataGridDateEditColumn> break;
+case "System.String":
+<DxDataGridColumn Field="@col.ToString()"></DxDataGridColumn>break;
+default:
+<DxDataGridColumn Field="@col.ToString()"></DxDataGridColumn>break;
+
+}
+}
+                    </Columns>
+                </DxDataGrid>
+            </div>
+        </div>
+    </div>
+</div>}
+
+
+@code
+{
+    string RowCount;
+    [Inject]
+    public IDynamicAPIService dynamicAPIService { get; set; }
+    public GetRequestConfiguration chartdetails { get; set; }
+
+    List<ExpandoObject> _data = StaticDataSource.chartAttributesList.OrderBy(a => a.ChartOrder).Where(a => a.ChartType == "Report" && a.Id == StaticDataSource.MenuItem.ComponentId).FirstOrDefault().TableData;
+
+    DxDataGrid<ExpandoObject> grid;
+    bool IsFistRender = false;
+    DataSourceLoadOptionsBase test;//= new DataSourceLoadOptionsBase();
+    protected Task<LoadResult> LoadRepostData(DataSourceLoadOptionsBase options, CancellationToken cancellationToken)
+    {
+        ///string baseUri = NavigationManager.BaseUri.ToString();
+        StaticDataSource.MailSendData = DataSourceLoader.Load(_data, options).data.Cast<ExpandoObject>().ToList();
+        RowCount = "Row Count : " + DataSourceLoader.Load(_data, options).totalCount;
+        return Task.FromResult(DataSourceLoader.Load(_data, options));
+    }
+    protected override async Task OnInitializedAsync()
+    {
+        chartdetails = StaticDataSource.chartAttributesList.OrderBy(a => a.ChartOrder).Where(a => a.ChartType == "Report" && a.Id == StaticDataSource.MenuItem.ComponentId).FirstOrDefault();
+    }
+
+    void ExportExcel()
+    {
+        DataTable dt = StaticDataSource.MailSendData.ToDt();// ExtensionMethods.ToDt();
+                                                            //DataTable dt = StaticDataSource.chartAttributesList.OrderBy(a => a.ChartOrder).Where(a => a.ChartType == "Report" && a.Id == StaticDataSource.ComponentId).FirstOrDefault().ColumnDataTable;
+        string fileName = chartdetails.Title + DateTime.Now.Date.TimeOfDay + ".xlsx";
+        using (XLWorkbook wb = new XLWorkbook())
+        {
+            dt.TableName = chartdetails.Title;
+
+            wb.Worksheets.Add(dt);
+            using (MemoryStream stream = new MemoryStream())
+            {
+                wb.SaveAs(stream);
+                JS.SaveAs(fileName, stream.ToArray());
+            }
+        }
+    } }

@@ -1,0 +1,29 @@
+﻿@inherits LayoutComponentBase
+<RadzenHeader Style="background-color:#303EA0;color:white">
+    <ChildContent>
+        <div class="row justify-content-start align-items-center">
+            <div class="col-6 d-flex align-items-center">
+                <RadzenImage Path="/Images/Banner1.jpeg" Style="border-color:#303EA0" />
+            </div>
+            <div class="col-6 d-flex align-items-center justify-content-end">
+                <div class="d-none d-md-inline-flex align-items-center">
+                    <UserStatus />
+                </div>
+            </div>
+        </div>
+    </ChildContent>
+</RadzenHeader>
+<div style="width:100%;margin-top:100px">
+    @Body
+    @*<RadzenBody>
+            <ChildContent>
+                <RadzenContentContainer Name="main" >
+                    @Body
+                </RadzenContentContainer>
+            </ChildContent>
+        </RadzenBody>*@
+</div>
+
+<RadzenDialog />
+<RadzenNotification />
+<RadzenTooltip />

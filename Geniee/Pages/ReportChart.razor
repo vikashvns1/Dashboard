@@ -1,0 +1,246 @@
+﻿@page "/ReportChart"
+@using System.Collections.Generic;
+@using System.Collections.ObjectModel;
+@using System.ComponentModel;
+@using System.Data;
+@using System.Dynamic;
+@using DashBoardModel;
+@using Newtonsoft.Json;
+@using System.IO;
+@inject Microsoft.JSInterop.IJSRuntime JS
+@using System.Web
+@using ClosedXML.Excel;
+@inject Radzen.DialogService dialogService
+@inject NavigationManager NavigationManager
+@using DevExtreme.AspNet.Data
+@using DevExtreme.AspNet.Data.ResponseModel
+@using DevExtreme.AspNet.Data.Helpers;
+@using System.Threading
+@using System.Threading.Tasks
+@using Microsoft.AspNetCore.Http;
+@using Microsoft.AspNetCore.WebUtilities;
+@using Microsoft.Extensions.Primitives;
+
+
+
+@if (StaticDataSource.chartAttributesList.OrderBy(a => a.ChartOrder).Where(a => a.ChartType == "Report" && a.Id == StaticDataSource.MenuItem.ComponentId).FirstOrDefault().TableData == null)
+{
+<p><em>Loading...</em></p> }
+else
+{
+chartdetails = StaticDataSource.chartAttributesList.OrderBy(a => a.ChartOrder).Where(a => a.ChartType == "Report" && a.Id == StaticDataSource.MenuItem.ComponentId).FirstOrDefault();
+int count = chartdetails.ColumnDataTable.Rows.Count;
+RowCount = "Row Count : " + count;
+<div class="col-12">
+    <div class="card">
+        <div class="card-header">
+            <div style="font-weight:bold;text-align:center">@chartdetails.Title</div>
+        </div>
+        <div class="card-subtitle">
+            <div style="font-weight:bold;text-align:center;margin-top:8px">
+                @chartdetails.GroupKey   @itemCode
+            </div>
+        </div>
+        <div class="card-body">
+
+            <DxChart Data="@updateedDataSource">
+                <DxChartLineSeries Name="@chartdetails.Label1" ValueField="@((DataClass i) => i.YData1)" ArgumentField="@(i => i.XData)" AggregationMethod="@Enumerable.Sum">
+                </DxChartLineSeries>
+                <DxChartLegend Visible="false" />
+
+                <DxChartArgumentAxis>
+                    <DxChartAxisTitle Text="@chartdetails.XAxixDisplayName" />
+                </DxChartArgumentAxis>
+                <DxChartValueAxis>
+                    <DxChartAxisTitle Text="@chartdetails.YAxixDisplayName" />
+                </DxChartValueAxis>
+                <DxChartTooltip>
+                    <div class="p-1">
+                        @*<p class="text-align-center"><b>@context.Point.SeriesName</b></p>*@
+                        <b>@chartdetails.XAxixDisplayName :</b> @context.Point.Argument<br />
+                        <b>@chartdetails.YAxixDisplayName :</b> @context.Point.Value
+                    </div>
+                </DxChartTooltip>
+            </DxChart>
+        </div>
+    </div>
+    <div class="container-fluid">
+        <div class="row">
+            <DxDataGrid @ref="grid" CustomData="LoadRepostData" AllowSort="true" ShowGroupPanel="true" HorizontalScrollBarMode="ScrollBarMode.Auto" VerticalScrollBarMode="ScrollBarMode.Auto"
+                        T="@Object" ShowFilterRow="true"
+                        VerticalScrollableHeight="400" @bind-SingleSelectedDataRow="@SelectedProduct" RowClick="@OnRowClick"
+                        PageSize="1000"
+                        CssClass="mw-1100">
+                <HeaderTemplate>
+                    <DxToolbar ItemRenderStyleMode="ToolbarRenderStyleMode.Plain" ItemSizeMode="SizeMode.Small">
+                        <DxToolbarItem Text="@RowCount" RenderStyle="ButtonRenderStyle.Light" RenderStyleMode="ToolbarItemRenderStyleMode.Contained" BeginGroup="true" Alignment="ToolbarItemAlignment.Left" />
+                        <DxToolbarItem Text="Export to Excel" RenderStyle="ButtonRenderStyle.Secondary" RenderStyleMode="ToolbarItemRenderStyleMode.Contained" BeginGroup="true" IconCssClass="grid-toolbar-Export" Click="ExportExcel" Alignment="ToolbarItemAlignment.Right" />
+                        <DxToolbarItem Text="Send Mail" RenderStyle="ButtonRenderStyle.Secondary" RenderStyleMode="ToolbarItemRenderStyleMode.Contained" BeginGroup="true" IconCssClass="oi oi-undo" Click="@(args => dialogService.Open<MailSender>("Send Mail",null,new DialogOptions(){ Width = "auto", Height = "auto" }))" Alignment="ToolbarItemAlignment.Right" />
+                        <DxDataGridColumnChooserToolbarItem Alignment="ToolbarItemAlignment.Right" BeginGroup="true" />
+                    </DxToolbar>
+                </HeaderTemplate>
+                <Columns>
+                    @foreach (DataColumn col in StaticDataSource.chartAttributesList.OrderBy(a => a.ChartOrder).Where(a => a.ChartType == "Report" && a.Id == StaticDataSource.MenuItem.ComponentId).FirstOrDefault().ColumnDataTable.Columns)
+                    {
+
+                        switch (col.DataType.FullName)
+                        {
+                            case "System.Int32":
+<DxDataGridSpinEditColumn Field="@col.ToString()"></DxDataGridSpinEditColumn> break;
+case "System.DateTime":
+<DxDataGridDateEditColumn Field="@col.ToString()"></DxDataGridDateEditColumn> break;
+case "System.String":
+<DxDataGridColumn Field="@col.ToString()"></DxDataGridColumn>break;
+default:
+<DxDataGridColumn Field="@col.ToString()"></DxDataGridColumn>break;
+
+}
+}
+                </Columns>
+            </DxDataGrid>
+        </div>
+
+    </div>
+</div>}
+@code
+{ [Inject]
+    public IDynamicAPIService dynamicAPIService { get; set; }
+    string RowCount;
+    object selectedProduct;
+      
+
+    public object SelectedProduct
+    {
+        get { return selectedProduct; }
+        set
+        {
+            selectedProduct = value;
+            InvokeAsync(StateHasChanged);
+        }
+    }
+
+    string itemCode;
+    public string ItemCode
+    {
+        get { return itemCode; }
+        set
+        {
+            itemCode = value;
+            InvokeAsync(StateHasChanged);
+        }
+    }
+
+
+    List<ExpandoObject> _data = StaticDataSource.chartAttributesList.OrderBy(a => a.ChartOrder).Where(a => a.ChartType == "Report" && a.Id == StaticDataSource.MenuItem.ComponentId).FirstOrDefault().TableData;
+
+    public GetRequestConfiguration chartdetails { get; set; }
+    List<DataClass> updateedDataSource = new List<DataClass>();
+    protected override async Task OnInitializedAsync()
+    {
+        chartdetails = StaticDataSource.chartAttributesList.OrderBy(a => a.ChartOrder).Where(a => a.ChartType == "Report" && a.Id == StaticDataSource.MenuItem.ComponentId).FirstOrDefault();
+        //StaticDataSource.MailSendData = chartdetails.ColumnDataTable;
+        SelectedProduct = chartdetails.TableData.FirstOrDefault();
+        ExpandoObject ex = new ExpandoObject();
+        ex = (ExpandoObject)(SelectedProduct);
+        Param param = new Param();
+        param = chartdetails.Filter.FirstOrDefault();
+        ItemCode = ex.First(a => a.Key == chartdetails.GroupKey.Trim()).Value.ToString();
+        string qry = "select p3.itemid, p2.podate, p3.rate from purorder p2 join purorderitem p3 on (p2.po_id = p3.po_id and p2.siteid = 0 and p3.siteid = 0) left join itemmaster i on(p3.itemid = i.itemid) where p3.itemid =@id::int4";
+
+        var _param = new Param { IsSp = param.IsSp, QueryOrSp = param.QueryOrSp, Label = param.Label, Value = ItemCode };
+
+        string jsonChartstring = await dynamicAPIService.GetDatabyParam(StaticDataSource.MenuItem.ConnectionString, StaticDataSource.MenuItem.ProviderName, _param);
+        var response = JsonConvert.DeserializeObject<OutputData>(jsonChartstring);
+
+        if (response.DynamicData != null)
+        {
+            StaticDataSource.ChartDataObj = new ObservableCollection<ExpandoObject>(response.DynamicData);
+            List<DataClass> chartDataList = new List<DataClass>();
+            foreach (var inputAttribute in StaticDataSource.ChartDataObj)
+            {
+                DataClass row = new DataClass();
+                foreach (KeyValuePair<string, object> itm in inputAttribute)
+                {
+                    // Create a new dynamic ExpandoObject
+                    if (itm.Key.ToString() == "podate")
+                        row.XData = itm.Value.ToString();
+                    else if (itm.Key.ToString() == "rate")
+                        row.YData1 = (itm.Value == null) ? 0 : Convert.ToDouble((itm.Value.ToString()));
+                }
+                // Add the object to the dynamic output list
+                chartDataList.Add(row);
+            }
+            //value.ControlData = chartDataList;
+            updateedDataSource = chartDataList;
+            StateHasChanged();
+        }
+    }
+
+    DataSourceLoadOptionsBase test;//= new DataSourceLoadOptionsBase();
+    protected Task<LoadResult> LoadRepostData(DataSourceLoadOptionsBase options, CancellationToken cancellationToken)
+    {
+        RowCount = string.Empty;
+        ///string baseUri = NavigationManager.BaseUri.ToString();
+        StaticDataSource.MailSendData = DataSourceLoader.Load(_data, options).data.Cast<ExpandoObject>().ToList();
+        RowCount = "Row Count : " + StaticDataSource.MailSendData.ToList().Count;
+
+        return Task.FromResult(DataSourceLoader.Load(_data, options));
+    }
+
+    DxDataGrid<object> grid;
+    async void OnRowClick(DataGridRowClickEventArgs<object> args)
+    {
+        var v = grid.Data;
+        ExpandoObject ex = new ExpandoObject();
+        ex = (ExpandoObject)(SelectedProduct);
+        Param param = new Param();
+        param = chartdetails.Filter.FirstOrDefault();
+        ItemCode = ex.First(a => a.Key == chartdetails.GroupKey.Trim()).Value.ToString();
+        //string qry = "select p3.itemid, p2.podate, p3.rate from purorder p2 join purorderitem p3 on (p2.po_id = p3.po_id and p2.siteid = 0 and p3.siteid = 0) left join itemmaster i on(p3.itemid = i.itemid) where p3.itemid =@id::int4";
+
+        var _param = new Param { IsSp = param.IsSp, QueryOrSp = param.QueryOrSp, Label = param.Label, Value = ItemCode };
+
+        string jsonChartstring = await dynamicAPIService.GetDatabyParam(StaticDataSource.MenuItem.ConnectionString, StaticDataSource.MenuItem.ProviderName, _param);
+        var response = JsonConvert.DeserializeObject<OutputData>(jsonChartstring);
+
+        if (response.DynamicData != null)
+        {
+            StaticDataSource.ChartDataObj = new ObservableCollection<ExpandoObject>(response.DynamicData);
+            List<DataClass> chartDataList = new List<DataClass>();
+            foreach (var inputAttribute in StaticDataSource.ChartDataObj)
+            {
+                DataClass row = new DataClass();
+                foreach (KeyValuePair<string, object> itm in inputAttribute)
+                {
+                    // Create a new dynamic ExpandoObject
+                    if (itm.Key.ToString() == "podate")
+                        row.XData = itm.Value.ToString();
+                    else if (itm.Key.ToString() == "rate")
+                        row.YData1 = (itm.Value == null) ? 0 : Convert.ToDouble((itm.Value.ToString()));
+                }
+                // Add the object to the dynamic output list
+                chartDataList.Add(row);
+            }
+            //value.ControlData = chartDataList;
+            updateedDataSource = chartDataList;
+            StateHasChanged();
+        }
+    }
+
+    void ExportExcel()
+    {
+        DataTable dt = StaticDataSource.MailSendData.ToDt();// ExtensionMethods.ToDt();
+                                                            //DataTable dt = StaticDataSource.chartAttributesList.OrderBy(a => a.ChartOrder).Where(a => a.ChartType == "Report" && a.Id == StaticDataSource.ComponentId).FirstOrDefault().ColumnDataTable;
+        string fileName = chartdetails.Title + DateTime.Now.Date.TimeOfDay + ".xlsx";
+        using (XLWorkbook wb = new XLWorkbook())
+        {
+            dt.TableName = chartdetails.Title;
+
+            wb.Worksheets.Add(dt);
+            using (MemoryStream stream = new MemoryStream())
+            {
+                wb.SaveAs(stream);
+                JS.SaveAs(fileName, stream.ToArray());
+            }
+        }
+    } }

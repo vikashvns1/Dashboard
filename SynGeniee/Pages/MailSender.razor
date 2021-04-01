@@ -1,0 +1,236 @@
+﻿@page "/MailSender"
+@using MailKit.Net.Smtp;
+@using MailKit.Security;
+@using Microsoft.Extensions.Options;
+@using MimeKit;
+@using MimeKit.Text;
+@using DashBoardModel;
+@using System.Data;
+@using System.Text;
+@using System.Web
+@using ClosedXML.Excel;
+@using System.IO;
+@using Syncfusion.Blazor.DropDowns
+@using Syncfusion.Blazor.RichTextEditor
+<div class="container-fluid">
+    <EditForm Model="EmailConfig" OnValidSubmit="Send">
+        <div class="container-fluid">
+            <div class="row">
+                @*<label>@ErrorMsg</label>*@
+                <AlertMessage Message="@message" MessageType="@messageType" />
+                <DataAnnotationsValidator />
+            </div>
+
+            <div class="row p-1">
+                <div class="col-2">To</div>
+                <div class="col-10">
+                    @*<input @bind-value="@EmailConfig.To" />*@
+                    <ValidationMessage For="@(() => EmailConfig.To)" />
+                    <SfMultiSelect TValue="string[]" Width="100%" Placeholder="Sender.." @bind-Value="@EmailConfig.To" DataSource="@Country" AllowCustomValue="true" Mode="@VisualMode.Box">
+                        <MultiSelectFieldSettings Text="EmailId" Value="EmailId"></MultiSelectFieldSettings>
+                    </SfMultiSelect>
+                </div>
+            </div>
+            <div class="row p-1">
+                <div class="col-2">Subject</div>
+
+                <div class="col-10">
+                    <input @bind-value="@EmailConfig.Subject" width="700" />
+                    <ValidationMessage For="@(() => EmailConfig.Subject)" />
+                </div>
+            </div>
+            <div class="row p-1">
+                <div class="col-2">Mail</div>
+                <div class="col-10">
+                    @*<textarea id="TextArea1" @bind="@EmailConfig.MailBody" rows="5" cols="60"></textarea>*@
+                    <SfRichTextEditor  ShowCharCount="true" @bind-Value="@EmailConfig.MailBody">
+                        <ChildContent>
+                            <RichTextEditorIFrameSettings Enable="true" />
+                            <RichTextEditorToolbarSettings Type="ToolbarType.Expand" />
+                        </ChildContent>
+                    </SfRichTextEditor>
+                    <ValidationMessage For="@(() => EmailConfig.MailBody)" />
+                    @*<DxMemo BindValueMode="BindValueMode.OnInput" @bind-Text="@EmailConfig.MailBody" ClearButtonDisplayMode="DataEditorClearButtonDisplayMode.Auto" NullText="Type Text..."> </DxMemo>*@
+                </div>
+            </div>
+            <div class="row p-1">
+                <div class="col-2"></div><div class="col-12"><input id="Checkbox1" type="checkbox" @bind="@Checked" /> Send Mail With Report</div>
+            </div>
+            <div class="row p-1">
+                <div class="col-12 container-fluid align-items-center">
+                    @*<DxButton SizeMode="SizeMode.Small" RenderStyle="ButtonRenderStyle.Secondary" SubmitFormOnClick="true" Enabled="@IsBusy" Text="Send"></DxButton>*@
+                    <RadzenButton ButtonType="ButtonType.Submit" Text="Submit" ButtonStyle="ButtonStyle.Secondary"></RadzenButton>
+                </div>
+                @*<div class="col-6 align-content-start"><DxButton SizeMode="SizeMode.Small" Text="Cancel"></DxButton></div>*@
+            </div>
+        </div>
+    </EditForm>
+    </div>
+    @code {
+        EmailConfiguration EmailConfig = new EmailConfiguration();
+        string message = string.Empty;
+        AlertMessageType messageType = AlertMessageType.Success;
+        [Parameter]
+        public string MailSubject { get; set; }
+        string errorMsg;
+        public string ErrorMsg
+        {
+            get { return errorMsg; }
+            set
+            {
+                errorMsg = value;
+                InvokeAsync(StateHasChanged);
+            }
+        }
+
+        bool isBusy;
+        public bool IsBusy
+        {
+            get { return isBusy; }
+            set
+            {
+                isBusy = value;
+                InvokeAsync(StateHasChanged);
+            }
+        }
+
+        bool Checked = true;
+        protected override Task OnInitializedAsync()
+        {
+            IsBusy = true;
+            EmailConfig.From = StaticDataSource.userInfo.FromMail;
+            EmailConfig.SmtpServer = StaticDataSource.userInfo.SmtpServer;
+            EmailConfig.Port = Convert.ToString(StaticDataSource.userInfo.Port);
+            EmailConfig.UserName = StaticDataSource.userInfo.FromMail;
+            EmailConfig.Password = StaticDataSource.userInfo.EmailPassword;
+            //EmailConfig.To = "vikashvns1@gmail.com";
+            //EmailConfig.MailBody = htmlTable(StaticDataSource.MailSendData);
+            EmailConfig.Subject = MailSubject;
+            return base.OnInitializedAsync();
+        }
+
+        public void Send()
+        {
+            try
+            {
+                IsBusy = false;
+                ErrorMsg = "Please Wait, Mail is sending";
+                StateHasChanged();
+                // create message
+                var email = new MimeMessage();
+                email.Sender = MailboxAddress.Parse(EmailConfig.From);
+                foreach (string rcpt in EmailConfig.To)
+                {
+                    email.To.Add(MailboxAddress.Parse(rcpt));
+                }
+
+                email.Subject = EmailConfig.Subject;
+                //email.Body = new TextPart(TextFormat.Html) { Text = mail };
+
+                var bodyBuilder = new BodyBuilder { HtmlBody = string.Format(EmailConfig.MailBody) };
+                if (Checked)
+                {
+                    string fileName = StaticDataSource.MenuItem.Menu + DateTime.Now.Ticks + ".xlsx";
+                    using (XLWorkbook wb = new XLWorkbook())
+                    {
+                        DataTable dt = new DataTable();
+                        dt = StaticDataSource.MailSendData.ToDt();
+                        dt.TableName = StaticDataSource.MenuItem.Menu;
+
+                        wb.Worksheets.Add(dt);
+                        using (MemoryStream stream = new MemoryStream())
+                        {
+                            wb.SaveAs(stream);
+                            bodyBuilder.Attachments.Add(fileName, stream.ToArray(), ContentType.Parse("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"));
+                        }
+                    }
+                }
+
+                email.Body = bodyBuilder.ToMessageBody();
+
+                using (var client = new SmtpClient())
+                {
+                    try
+                    {
+                        client.Connect(EmailConfig.SmtpServer, Convert.ToInt32(EmailConfig.Port), SecureSocketOptions.StartTls);
+                        client.AuthenticationMechanisms.Remove("XOAUTH2");
+                        client.Authenticate(EmailConfig.From, EmailConfig.Password);
+                        client.Send(email);
+                        ErrorMsg =
+                        message = "Email Successfully Sent";
+                        messageType = AlertMessageType.Success;
+                    }
+                    catch (Exception ex)
+                    {
+                        IsBusy = true;
+                        string msg = ex.Message;
+                        ErrorMsg = ex.Message;
+                        message = ex.Message; ;
+                        messageType = AlertMessageType.Error;
+                    }
+                    finally
+                    {
+                        IsBusy = true;
+                        client.Disconnect(true);
+                        client.Dispose();
+
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                IsBusy = true;
+                string msg = ex.Message;
+                ErrorMsg = ex.Message;
+                message = ex.Message; ;
+                messageType = AlertMessageType.Error;
+            }
+        }
+
+        private string htmlTable(DataTable dt)
+        {
+            StringBuilder sb = new StringBuilder();
+            //Table start.
+            sb.Append("<table cellpadding='5' cellspacing='0' style='border: 1px solid #ccc;font-size: 9pt;font-family:Arial'>");
+
+            //Adding HeaderRow.
+            sb.Append("<tr>");
+            foreach (DataColumn column in dt.Columns)
+            {
+                sb.Append("<th style='background-color: #B8DBFD;border: 1px solid #ccc'>" + column.ColumnName + "</th>");
+            }
+            sb.Append("</tr>");
+
+
+            //Adding DataRow.
+            foreach (DataRow row in dt.Rows)
+            {
+                sb.Append("<tr>");
+                foreach (DataColumn column in dt.Columns)
+                {
+                    sb.Append("<td style='width:100px;border: 1px solid #ccc'>" + row[column.ColumnName].ToString() + "</td>");
+                }
+                sb.Append("</tr>");
+            }
+
+            //Table end.
+            sb.Append("</table>");
+            return sb.ToString();
+        }
+
+        public class Countries
+        {
+            public string EmailId { get; set; }
+        }
+        private List<Countries> Country = new List<Countries>
+    {
+        new Countries() { EmailId = "amit@gmail.com"},
+        new Countries() { EmailId = "vikashvns1@gmail.com"},
+        new Countries() { EmailId = "rohit@gmail.com"},
+        new Countries() { EmailId = "amol@gmail.com"},
+        new Countries() { EmailId = "shid@gmail.com"},
+        new Countries() { EmailId = "rupak@gmail.com"},
+        new Countries() { EmailId = "navin@gmail.com"},
+        new Countries() { EmailId = "manish@gmail.com"},
+    };
+    }

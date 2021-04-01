@@ -1,0 +1,388 @@
+﻿@layout AdminLayout
+@page "/ChartsConfigurationComponents"
+@using Microsoft.AspNetCore.WebUtilities;
+@using Microsoft.Extensions.Configuration
+@inject NavigationManager urihelper;
+@inject IConfiguration  _configuration
+@using DashBoardModel
+@inject Radzen.DialogService dialogService;
+@inject TooltipService tooltipService;
+@inject NotificationService notificationService;
+@using Syncfusion.Blazor.Grids
+@using Syncfusion.Blazor.Data
+@using Syncfusion.Blazor.DropDowns
+@using Syncfusion.Blazor.Charts
+
+@if (_chartConfigurationList == null)
+{
+    <p><em>Loading....</em></p>
+    <RadzenProgressBar Mode="ProgressBarMode.Indeterminate"></RadzenProgressBar>
+}
+else
+{
+<SfGrid TValue="PostRequestConfiguration" @ref="@DefaultGrid" FrozenColumns="3" Height="@Height" RowHeight="30" AllowFiltering="true" ShowColumnChooser="true" DataSource="@_chartConfigurationList" Toolbar="@(new List<string>() { "Add", "Edit", "Delete", "Update", "Cancel","Search" })">
+    <GridEditSettings AllowAdding="true" AllowEditing="true" AllowDeleting="true"></GridEditSettings>
+    <GridFilterSettings Type="Syncfusion.Blazor.Grids.FilterType.Excel" ShowFilterBarStatus="true"></GridFilterSettings>
+    <GridEvents OnActionBegin="ActionBeginAsync" TValue="PostRequestConfiguration"></GridEvents>
+    <GridColumns>
+        <GridColumn IsIdentity="true" IsPrimaryKey="true" EditorSettings="@EditParams" Field=@nameof(RC.Id) HeaderText="Id" Width="50px"></GridColumn>
+        <GridColumn  EditorSettings="@EditParams" Field=@nameof(RC.CompanyId) Visible="false" Width="50px"></GridColumn>
+
+        <GridColumn Field=@nameof(RC.Title) Width="300px"></GridColumn>
+        <GridColumn Field=@nameof(RC.IsSp) Type="ColumnType.Boolean" EditType="EditType.BooleanEdit" Context="data" Width="70px">
+            <Template>
+                @{string QueryOrSp = (data as PostRequestConfiguration).IsSp == true ? "StoreProcedure" : "Query";}
+                @QueryOrSp
+            </Template>
+        </GridColumn>
+        <GridColumn Field=@nameof(RC.QueryOrSp) Context="data" AutoFit="false" Width="300px">
+            <Template>
+                @{
+                    <RadzenLabel MouseEnter="@(args => ShowTooltip(args, (data as PostRequestConfiguration).QueryOrSp) )" Text="@((data as PostRequestConfiguration).QueryOrSp)" Style="width:100%;" ReadOnly="true"></RadzenLabel>
+                }
+            </Template>
+        </GridColumn>
+        <GridColumn Field=@nameof(RC.DashBoardNo) Type="ColumnType.Number" EditorSettings="@EditParams" Width="160px"></GridColumn>
+        <GridColumn Field=@nameof(RC.ChartType) Type="ColumnType.Number" EditorSettings="@EditParams" Context="data" Width="160px">
+            <Template>
+                @{
+                    if (((data as PostRequestConfiguration).ChartType) != 0)
+                    {
+                        int Id = (data as PostRequestConfiguration).ChartType;
+                        string _Type = StaticDataSource.ChartTypeList.Where(a => a.Id == Id).Select(b => b.ChartType).FirstOrDefault();
+                        <RadzenLabel Text="@_Type" Style="width:100%"></RadzenLabel>
+                    }
+                    else
+                    {
+                        <RadzenLabel Text="" Style="width:100%"></RadzenLabel>
+                    }
+                }
+            </Template>
+            <EditTemplate>
+                <SfDropDownList TValue="int" Width="140px" TItem="ChartTypeModel" Placeholder="Chart Types" DataSource="@StaticDataSource.ChartTypeList" @bind-Value="@((data as PostRequestConfiguration).ChartType)">
+                    <DropDownListFieldSettings Value="Id" Text="ChartType"></DropDownListFieldSettings>
+                </SfDropDownList>
+            </EditTemplate>
+        </GridColumn>
+        <GridColumn Field=@nameof(RC.ChartOrder) Type="ColumnType.Number" EditorSettings="@EditParams" Width="150px"></GridColumn>
+        <GridColumn Field=@nameof(RC.BlockPosition) Type="ColumnType.Number" EditorSettings="@EditParams" Context="data" Width="260px">
+            <Template>
+                @{
+                    if (((data as PostRequestConfiguration).BlockPosition) != 0)
+                    {
+                        int Id = (data as PostRequestConfiguration).BlockPosition;
+                        string _Type = StaticDataSource.BlockPositionData.Where(a => a.Id == Id).Select(b => b.BlockPosition).FirstOrDefault();
+                        <RadzenLabel Text="@_Type" Style="width:100%"></RadzenLabel>
+                    }
+                    else
+                    {
+                        <RadzenLabel Text="" Style="width:100%"></RadzenLabel>
+                    }
+                }
+            </Template>
+            <EditTemplate>
+                <SfDropDownList TValue="int" Width="230px" TItem="BlockPositionModel" Placeholder="Block Position" DataSource="@StaticDataSource.BlockPositionData" @bind-Value="@((data as PostRequestConfiguration).BlockPosition)">
+                    <DropDownListFieldSettings Value="Id" Text="BlockPosition"></DropDownListFieldSettings>
+                </SfDropDownList>
+            </EditTemplate>
+        </GridColumn>
+        <GridColumn Field=@nameof(RC.Width) Width="100px"></GridColumn>
+        <GridColumn Field=@nameof(RC.Height) Width="100px"></GridColumn>
+        <GridColumn Field=@nameof(RC.Active) Type="ColumnType.Boolean" EditType="EditType.BooleanEdit" Width="100px"></GridColumn>
+        <GridColumn Field=@nameof(RC.XAxixDisplayName) Width="200px"></GridColumn>
+        <GridColumn Field=@nameof(RC.YAxixDisplayName) Width="200px"></GridColumn>
+        <GridColumn Field=@nameof(RC.FormateString) Width="160px"></GridColumn>
+        <GridColumn Field=@nameof(RC.XAxixValueColumnName) Width="200px"></GridColumn>
+        <GridColumn Field=@nameof(RC.YAxixValueColumnName1) Width="200px"></GridColumn>
+        <GridColumn Field=@nameof(RC.YAxixValueColumnName2) Width="200px"></GridColumn>
+        <GridColumn Field=@nameof(RC.YAxixValueColumnName3) Width="200px"></GridColumn>
+        <GridColumn Field=@nameof(RC.YAxixValueColumnName4) Width="200px"></GridColumn>
+        <GridColumn Field=@nameof(RC.YAxixValueColumnName5) Width="200px"></GridColumn>
+        <GridColumn Field=@nameof(RC.Y1Color) Context="data" HeaderText="Y1 Color" Width="160px">
+            <EditTemplate>
+                <SfDropDownList TValue="string" Width="140px" TItem="CardBgColorModel" Placeholder="Card BG Color" DataSource="@StaticDataSource.CardBgColorList" @bind-Value="@((data as PostRequestConfiguration).Y1Color)">
+                    <DropDownListFieldSettings Value="CardBgColor" Text="CardBgColor"></DropDownListFieldSettings>
+                </SfDropDownList>
+            </EditTemplate>
+        </GridColumn>
+        <GridColumn Field=@nameof(RC.Y2Color) Context="data" HeaderText="Y2 Color" Width="160px">
+            <EditTemplate>
+                <SfDropDownList TValue="string" Width="140px" TItem="CardBgColorModel" Placeholder="Fill Color" DataSource="@StaticDataSource.CardBgColorList" @bind-Value="@((data as PostRequestConfiguration).Y2Color)">
+                    <DropDownListFieldSettings Value="Id" Text="CardBgColor"></DropDownListFieldSettings>
+                </SfDropDownList>
+            </EditTemplate>
+        </GridColumn>
+        <GridColumn Field=@nameof(RC.Y3Color) Context="data" HeaderText="Y3 Color" Width="160px">
+            <EditTemplate>
+                <SfDropDownList TValue="string" Width="140px" TItem="CardBgColorModel" Placeholder="Fill Color" DataSource="@StaticDataSource.CardBgColorList" @bind-Value="@((data as PostRequestConfiguration).Y3Color)">
+                    <DropDownListFieldSettings Value="Id" Text="CardBgColor"></DropDownListFieldSettings>
+                </SfDropDownList>
+            </EditTemplate>
+        </GridColumn>
+        <GridColumn Field=@nameof(RC.Y4Color) Context="data" HeaderText="Y4 Color" Width="160px">
+            <EditTemplate>
+                <SfDropDownList TValue="string" Width="140px" TItem="CardBgColorModel" Placeholder="Fill Color" DataSource="@StaticDataSource.CardBgColorList" @bind-Value="@((data as PostRequestConfiguration).Y4Color)">
+                    <DropDownListFieldSettings Value="Id" Text="CardBgColor"></DropDownListFieldSettings>
+                </SfDropDownList>
+            </EditTemplate>
+        </GridColumn>
+        <GridColumn Field=@nameof(RC.Y5Color) Context="data" HeaderText="Y5 Color" Width="160px">
+            <EditTemplate>
+                <SfDropDownList TValue="string" Width="140px" TItem="CardBgColorModel" Placeholder="Fill Color" DataSource="@StaticDataSource.CardBgColorList" @bind-Value="@((data as PostRequestConfiguration).Y5Color)">
+                    <DropDownListFieldSettings Value="Id" Text="CardBgColor"></DropDownListFieldSettings>
+                </SfDropDownList>
+            </EditTemplate>
+        </GridColumn>
+        <GridColumn Field=@nameof(RC.Label1) HeaderText="Label 1 Name" Width="160px"></GridColumn>
+        <GridColumn Field=@nameof(RC.Label2) HeaderText="Label 2 Name" Width="160px"></GridColumn>
+        <GridColumn Field=@nameof(RC.Label3) HeaderText="Label 3 Name" Width="160px"></GridColumn>
+        <GridColumn Field=@nameof(RC.Label4) HeaderText="Label 4 Name" Width="160px"></GridColumn>
+        <GridColumn Field=@nameof(RC.Label5) HeaderText="Label 5 Name" Width="160px"></GridColumn>
+        <GridColumn Field=@nameof(RC.LineType1) Type="ColumnType.Boolean" EditType="EditType.BooleanEdit" HeaderText="Label 1 Visible" Width="160px"></GridColumn>
+        <GridColumn Field=@nameof(RC.LineType2) Type="ColumnType.Boolean" EditType="EditType.BooleanEdit" HeaderText="Label 2 Visible" Width="160px"></GridColumn>
+        <GridColumn Field=@nameof(RC.LineType3) Type="ColumnType.Boolean" EditType="EditType.BooleanEdit" HeaderText="Label 3 Visible" Width="160px"></GridColumn>
+        <GridColumn Field=@nameof(RC.LineType4) Type="ColumnType.Boolean" EditType="EditType.BooleanEdit" HeaderText="Label 4 Visible" Width="160px"></GridColumn>
+        <GridColumn Field=@nameof(RC.LineType5) Type="ColumnType.Boolean" EditType="EditType.BooleanEdit" HeaderText="Label 5 Visible" Width="160px"></GridColumn>
+        <GridColumn Field=@nameof(RC.MarkerType1) Type="ColumnType.Number" EditType="EditType.BooleanEdit" EditorSettings="@EditParams" Context="data" HeaderText="Label 1 Position" Width="160px">
+            <Template>
+                @{
+                    if (((data as PostRequestConfiguration).MarkerType1) != 0)
+                    {
+                        int Id = (data as PostRequestConfiguration).MarkerType1;
+                        string _Type = StaticDataSource.MarkerTypeList.Where(a => a.Id == Id).Select(b => b.MarkerType).FirstOrDefault();
+                        <RadzenLabel Text="@_Type" Style="width:100%"></RadzenLabel>
+                    }
+                    else
+                    {
+                        <RadzenLabel Text="" Style="width:100%"></RadzenLabel>
+                    }
+                }
+            </Template>
+            <EditTemplate>
+                <SfDropDownList TValue="int" Width="140px" TItem="MarkerTypeModel" Placeholder="Label Position" DataSource="@StaticDataSource.MarkerTypeList" @bind-Value="@((data as PostRequestConfiguration).MarkerType1)">
+                    <DropDownListFieldSettings Value="Id" Text="MarkerType"></DropDownListFieldSettings>
+                </SfDropDownList>
+            </EditTemplate>
+        </GridColumn>
+        <GridColumn Field=@nameof(RC.MarkerType2) Type="ColumnType.Number" EditorSettings="@EditParams" Context="data" HeaderText="Label 2 Position" Width="160px">
+            <Template>
+                @{
+                    if (((data as PostRequestConfiguration).MarkerType2) != 0)
+                    {
+                        int Id = (data as PostRequestConfiguration).MarkerType2;
+                        string _Type = StaticDataSource.MarkerTypeList.Where(a => a.Id == Id).Select(b => b.MarkerType).FirstOrDefault();
+                        <RadzenLabel Text="@_Type" Style="width:100%"></RadzenLabel>
+                    }
+                    else
+                    {
+                        <RadzenLabel Text="" Style="width:100%"></RadzenLabel>
+                    }
+                }
+            </Template>
+            <EditTemplate>
+                <SfDropDownList TValue="int" Width="140px" TItem="MarkerTypeModel" Placeholder="Label Position" DataSource="@StaticDataSource.MarkerTypeList" @bind-Value="@((data as PostRequestConfiguration).MarkerType2)">
+                    <DropDownListFieldSettings Value="Id" Text="MarkerType"></DropDownListFieldSettings>
+                </SfDropDownList>
+            </EditTemplate>
+        </GridColumn>
+        <GridColumn Field=@nameof(RC.MarkerType3) Type="ColumnType.Number" EditorSettings="@EditParams" Context="data" HeaderText="Label 3 Position" Width="160px">
+            <Template>
+                @{
+                    if (((data as PostRequestConfiguration).MarkerType3) != 0)
+                    {
+                        int Id = (data as PostRequestConfiguration).MarkerType3;
+                        string _Type = StaticDataSource.MarkerTypeList.Where(a => a.Id == Id).Select(b => b.MarkerType).FirstOrDefault();
+                        <RadzenLabel Text="@_Type" Style="width:100%"></RadzenLabel>
+                    }
+                    else
+                    {
+                        <RadzenLabel Text="" Style="width:100%"></RadzenLabel>
+                    }
+                }
+            </Template>
+            <EditTemplate>
+                <SfDropDownList TValue="int" Width="140px" TItem="MarkerTypeModel" Placeholder="Label Position" DataSource="@StaticDataSource.MarkerTypeList" @bind-Value="@((data as PostRequestConfiguration).MarkerType3)">
+                    <DropDownListFieldSettings Value="Id" Text="MarkerType"></DropDownListFieldSettings>
+                </SfDropDownList>
+            </EditTemplate>
+        </GridColumn>
+        <GridColumn Field=@nameof(RC.MarkerType4) Type="ColumnType.Number" EditorSettings="@EditParams" Context="data" HeaderText="Label 4 Position" Width="160px">
+            <Template>
+                @{
+                    if (((data as PostRequestConfiguration).MarkerType4) != 0)
+                    {
+                        int Id = (data as PostRequestConfiguration).MarkerType4;
+                        string _Type = StaticDataSource.MarkerTypeList.Where(a => a.Id == Id).Select(b => b.MarkerType).FirstOrDefault();
+                        <RadzenLabel Text="@_Type" Style="width:100%"></RadzenLabel>
+                    }
+                    else
+                    {
+                        <RadzenLabel Text="" Style="width:100%"></RadzenLabel>
+                    }
+                }
+            </Template>
+            <EditTemplate>
+                <SfDropDownList TValue="int" Width="140px" TItem="MarkerTypeModel" Placeholder="Label Position" DataSource="@StaticDataSource.MarkerTypeList" @bind-Value="@((data as PostRequestConfiguration).MarkerType4)">
+                    <DropDownListFieldSettings Value="Id" Text="MarkerType"></DropDownListFieldSettings>
+                </SfDropDownList>
+            </EditTemplate>
+        </GridColumn>
+        <GridColumn Field=@nameof(RC.MarkerType5) Context="data" HeaderText="Label 5 Position" Width="160px">
+            <Template>
+                @{
+                    if (((data as PostRequestConfiguration).MarkerType5) != 0)
+                    {
+                        int Id = (data as PostRequestConfiguration).MarkerType5;
+                        string _Type = StaticDataSource.MarkerTypeList.Where(a => a.Id == Id).Select(b => b.MarkerType).FirstOrDefault();
+                        <RadzenLabel Text="@_Type" Style="width:100%"></RadzenLabel>
+                    }
+                    else
+                    {
+                        <RadzenLabel Text="" Style="width:100%"></RadzenLabel>
+                    }
+                }
+            </Template>
+            <EditTemplate>
+                <SfDropDownList TValue="int" Width="140px" TItem="MarkerTypeModel" Placeholder="Label Position" DataSource="@StaticDataSource.MarkerTypeList" @bind-Value="@((data as PostRequestConfiguration).MarkerType5)">
+                    <DropDownListFieldSettings Value="Id" Text="MarkerType"></DropDownListFieldSettings>
+                </SfDropDownList>
+            </EditTemplate>
+        </GridColumn>
+        <GridColumn Field=@nameof(RC.LegendAllowToggleSeries) Type="ColumnType.Boolean" EditType="EditType.BooleanEdit" HeaderText="LegendAllowToggleSeries" Width="160px"></GridColumn>
+        <GridColumn Field=@nameof(RC.LegendVisible) Type="ColumnType.Boolean" EditType="EditType.BooleanEdit" HeaderText="Legend Visible" Width="160px"></GridColumn>
+        <GridColumn Field=@nameof(RC.LegendPosition) Type="ColumnType.Number" EditorSettings="@EditParams" Context="data" HeaderText="Legend Position" Width="160px">
+            <Template>
+                @{
+                    if (((data as PostRequestConfiguration).LegendPosition) != 0)
+                    {
+                        int Id = (data as PostRequestConfiguration).LegendPosition;
+                        string _Type = StaticDataSource.LegendPositionList.Where(a => a.Id == Id).Select(b => b.LegendPosition).FirstOrDefault();
+                        <RadzenLabel Text="@_Type" Style="width:100%"></RadzenLabel>
+                    }
+                    else
+                    {
+                        <RadzenLabel Text="" Style="width:100%"></RadzenLabel>
+                    }
+                }
+            </Template>
+            <EditTemplate>
+                <SfDropDownList TValue="int" Width="140px" TItem="LegendPositionModel" Placeholder="Legend Position" DataSource="@StaticDataSource.LegendPositionList" @bind-Value="@((data as PostRequestConfiguration).LegendPosition)">
+                    <DropDownListFieldSettings Value="Id" Text="LegendPosition"></DropDownListFieldSettings>
+                </SfDropDownList>
+            </EditTemplate>
+        </GridColumn>
+        <GridColumn Field=@nameof(RC.LegendOrientation) Type="ColumnType.Boolean" EditType="EditType.BooleanEdit" HeaderText="Tooltip Enable" Width="160px"></GridColumn>
+        <GridColumn Field=@nameof(RC.CardBgColor) Type="ColumnType.Number" EditorSettings="@EditParams" Context="data" HeaderText="Card Color" Width="160px">
+            <Template>
+                @{
+                    if (((data as PostRequestConfiguration).CardBgColor) != 0)
+                    {
+                        int Id = (data as PostRequestConfiguration).CardBgColor;
+                        string _Type = StaticDataSource.CardBgColorList.Where(a => a.Id == Id).Select(b => b.CardBgColor).FirstOrDefault();
+                        <RadzenLabel Text="@_Type" Style="width:100%"></RadzenLabel>
+                    }
+                    else
+                    {
+                        <RadzenLabel Text="" Style="width:100%"></RadzenLabel>
+                    }
+                }
+            </Template>
+            <EditTemplate>
+                <SfDropDownList TValue="int" Width="140px" TItem="CardBgColorModel" Placeholder="Card BG Color" DataSource="@StaticDataSource.CardBgColorList" @bind-Value="@((data as PostRequestConfiguration).CardBgColor)">
+                    <DropDownListFieldSettings Value="Id" Text="CardBgColor"></DropDownListFieldSettings>
+                </SfDropDownList>
+            </EditTemplate>
+        </GridColumn>
+        <GridColumn Field=@nameof(RC.IsPopUpOpen) Type="ColumnType.Boolean" EditType="EditType.BooleanEdit" Width="160px"></GridColumn>
+        <GridColumn Field=@nameof(RC.IsFilterOn) Type="ColumnType.Boolean" EditType="EditType.BooleanEdit" Width="160px"></GridColumn>
+        <GridColumn Field=@nameof(RC.Xml) AutoFit="false" Width="300px"></GridColumn>
+    </GridColumns>
+</SfGrid>
+}
+@code {
+    [Inject]
+    public IDynamicAPIService dynamicAPIService { get; set; }
+    [Inject]
+    public NavigationManager Nav { get; set; }
+    public PostRequestConfiguration RC { get; set; }
+    public string Height = (StaticDataSource.WindowsHeight - 220) + "px";
+    public IEnumerable<PostRequestConfiguration> _chartConfigurationList = new List<PostRequestConfiguration>();
+    public string conn;
+    protected override async Task OnInitializedAsync()
+    {
+        System.Uri uri;
+        uri = Nav.ToAbsoluteUri(Nav.Uri);
+        if (QueryHelpers.ParseQuery(uri.Query).TryGetValue("Id", out var Id))
+        {
+            //int Id =Convert.ToInt32(Id);
+
+            conn = _configuration.GetConnectionString("DashBoardConnection");
+            string storeProc = "GetAdminConfigurationByUserId";
+
+            //IEnumerable<PostRequestConfiguration> _chartConfigurationList = new List<PostRequestConfiguration>();
+            var data = await dynamicAPIService.GetAdminConfigurationDataByUserId(conn, storeProc, Convert.ToInt32(Id));
+            _chartConfigurationList = data.ToList();
+            //StaticDataSource.chartAttributesList = _chartConfigurationList.ToList();// _chartConfigurationList.Where(a => a.Active == 1).ToList();
+
+            ChartsFeaturesList _ChartsFeaturesList = new ChartsFeaturesList();
+            _ChartsFeaturesList = await dynamicAPIService.GetChartsFeaturesData(conn);
+
+            StaticDataSource.ChartsFeaturesListData = _ChartsFeaturesList;
+            StaticDataSource.ChartTypeList = _ChartsFeaturesList.ChartTypeListData.ToList();
+            StaticDataSource.LegendPositionList = _ChartsFeaturesList.LegendPositionListData.ToList();
+            StaticDataSource.BlockPositionData = _ChartsFeaturesList.BlockPositionListData.ToList();
+            StaticDataSource.ColorSchemeList = _ChartsFeaturesList.ColorSchemeListData.ToList();
+            StaticDataSource.LineTypeList = _ChartsFeaturesList.LineTypListData.ToList();
+            StaticDataSource.MarkerTypeList = _ChartsFeaturesList.MarkerTypeListData.ToList();
+            StaticDataSource.CardBgColorList = _ChartsFeaturesList.CardBgColorListData.ToList();
+        }
+    }
+
+    void ShowTooltip(ElementReference elementReference, string content, TooltipOptions options = null) => tooltipService.Open(elementReference, content, options);
+    public IEditorSettings EditParams = new NumericEditCellParams
+    {
+        Params = new Syncfusion.Blazor.Inputs.NumericTextBoxModel<object>() { ShowClearButton = true, ShowSpinButton = false }
+    };
+
+    public SfGrid<PostRequestConfiguration> DefaultGrid;
+    public async Task ActionBeginAsync(ActionEventArgs<PostRequestConfiguration> args)
+    {
+        if (args.RequestType == Syncfusion.Blazor.Grids.Action.Save)
+        {
+            //args.Cancel = true;
+            int i = await dynamicAPIService.InsertUpdateChartConfigData(conn, args.Data);
+
+            if (i == 0)
+            {
+                var found = _chartConfigurationList.FirstOrDefault(c => c.Id == args.Data.Id);
+
+                //int index = StaticDataSource.MenuItemList.IndexOf(found);
+                found = args.Data;
+                notificationService.Notify(new NotificationMessage() { Severity = NotificationSeverity.Success, Summary = "Configuration Item ", Detail = $"Item has Updated Successfully.", Duration = 4000 });
+            }
+            else
+            {
+                args.Data.Id = i;
+                //StaticDataSource.AdminData.Add(data);
+                notificationService.Notify(new NotificationMessage() { Severity = NotificationSeverity.Success, Summary = "Configuration Item", Detail = $"New Item has beed added Successfully.", Duration = 4000 });
+            }
+            await DefaultGrid.CloseEdit();
+
+        }
+        else if (args.RequestType == Syncfusion.Blazor.Grids.Action.Delete)
+        {
+            //args.Cancel = true;
+            int i = await dynamicAPIService.DeleteUser(conn, args.Data.Id, "DeleteUserConfiguration");
+            if (i == -1)
+            {
+                var found = _chartConfigurationList.FirstOrDefault(c => c.Id == args.Data.Id);
+                found=null;
+                notificationService.Notify(new NotificationMessage() { Severity = NotificationSeverity.Success, Summary = "Menu Item", Detail = $"Menu Item has Deleted Successfully.", Duration = 4000 });
+            }
+        }
+        await InvokeAsync(() =>
+        {
+            this.StateHasChanged();
+        });
+    }
+}

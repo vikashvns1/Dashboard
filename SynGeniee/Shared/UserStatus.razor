@@ -1,0 +1,338 @@
+﻿@inject NavigationManager  navigationManager
+@using Newtonsoft.Json;
+@using Microsoft.Extensions.Configuration
+@inject IConfiguration  _configuration
+@using Syncfusion.Blazor.Notifications
+
+@*<SfToast @ref="ToastObj" Title="Notification" Timeout="0" EnablePersistence="true" NewestOnTop="true"  Content="@ToastContent" ShowCloseButton="true">
+        <ToastPosition X="Right" Y="Bottom"></ToastPosition>
+    </SfToast>*@
+<style>
+    .ulclass {
+        display: block;
+        /*        background: #45619D;
+    */ list-style: none;
+        margin: 0;
+        padding: 12px 10px;
+        height: 21px;
+    }
+
+        .ulclass li {
+            float: left;
+            font: 13px helvetica;
+            font-weight: bold;
+            margin: 3px 0;
+        }
+
+            .ulclass li a {
+                color: #FFF;
+                text-decoration: none;
+                padding: 6px 15px;
+                cursor: pointer;
+            }
+
+                .ulclass li a:hover {
+                    background: #425B90;
+                    text-decoration: none;
+                    cursor: pointer;
+                }
+
+    #noti_Container {
+        position: relative;
+    }
+
+    /* A CIRCLE LIKE BUTTON IN THE TOP MENU. */
+    #noti_Button {
+        width: 20px;
+        height: 20px;
+        line-height: 20px;
+        /*border-radius: 50%;
+            -moz-border-radius: 50%;
+            -webkit-border-radius: 50%;
+            background: #FFF;*/
+        margin: -8px 10px 0 10px;
+        cursor: pointer;
+    }
+
+    /* THE POPULAR RED NOTIFICATIONS COUNTER. */
+    #noti_Counter {
+        display: block;
+        position: absolute;
+        background: #E1141E;
+        color: #FFF;
+        font-size: 12px;
+        font-weight: normal;
+        padding: 1px 3px;
+        margin: -13px 0 0 20px;
+        border-radius: 2px;
+        -moz-border-radius: 2px;
+        -webkit-border-radius: 2px;
+        z-index: 2;
+    }
+
+    /* THE NOTIFICAIONS WINDOW. THIS REMAINS HIDDEN WHEN THE PAGE LOADS. */
+    #notifications {
+        display: none;
+        width: 440px;
+        position: absolute;
+        top: 25px;
+        left: -345px;
+        background: #FFF;
+        border: solid 1px rgba(100, 100, 100, .20);
+        -webkit-box-shadow: 0 3px 8px rgba(0, 0, 0, .20);
+        z-index: 0;
+    }
+        /* AN ARROW LIKE STRUCTURE JUST OVER THE NOTIFICATIONS WINDOW */
+        #notifications:before {
+            content: '';
+            display: block;
+            width: 0;
+            height: 0;
+            color: transparent;
+            border: 10px solid #CCC;
+            border-color: transparent transparent #FFF;
+            margin-top: -20px;
+            margin-left: 350px;
+        }
+
+    h3 {
+        display: block;
+        color: #333;
+        background: #FFF;
+        font-weight: bold;
+        font-size: 13px;
+        padding: 8px;
+        margin: 0;
+        border-bottom: solid 1px rgba(100, 100, 100, .30);
+    }
+
+    .seeAll {
+        background: #F6F7F8;
+        padding: 8px;
+        font-size: 12px;
+        font-weight: bold;
+        border-top: solid 1px rgba(100, 100, 100, .30);
+        text-align: center;
+    }
+
+        .seeAll a {
+            color: #3b5998;
+        }
+
+            .seeAll a:hover {
+                background: #F6F7F8;
+                color: #3b5998;
+                text-decoration: underline;
+            }
+</style>
+
+<span class="oi" aria-hidden="true" style="color:white">Welcome @StaticDataSource.userInfo.Name</span>
+
+<div>
+    <ul class="ulclass">
+
+        <li id="noti_Container">
+
+            <div id="noti_Counter" style="display: @NotificationCountDisplay;">@StaticDataSource.NewNotificationCount</div>
+            <!--SHOW NOTIFICATIONS COUNT.-->
+            <!--A CIRCLE LIKE BUTTON TO DISPLAY NOTIFICATION DROPDOWN.-->
+            <div id="noti_Button" @onclick="@(()=>OnOptionalMenuHide())" style="cursor: pointer">
+                <span><i style="font-size:20px" class="fa"></i> </span>
+            </div>
+
+            <!--THE NOTIFICAIONS DROPDOWN BOX.-->
+            <div id="notifications" style="display: @NotificationDisplay;">
+                <div>
+                    <h3>
+                        <span>Notifications</span>
+                        <span class="float-right text-dark" style="cursor:pointer" @onclick="@(()=> MarkAllread())">Mark all as read</span>
+                    </h3>
+                </div>
+                <div style="max-height:@notificationwindowHieght;overflow-y:auto;">
+                    @if (StaticDataSource.DbNotificationList != null)
+                    {
+                        @foreach (var item in StaticDataSource.DbNotificationList)
+                        {
+                            if (item.Status == 0)
+                            {
+                                <div style="width:100%;background-color:sandybrown;margin:0;border:solid;min-height:40px" @onclick="@(()=> Markread(item))">
+                                    <strong style="color:black;font-weight:bold;margin:5px 0 0 5px">@item.Msg</strong>
+                                    <br />
+                                    <small class="text-dark ml-2 mb-3">@item.date</small>
+                                    @*<hr />*@
+                                </div>
+                            }
+                            else
+                            {
+                                <div style="width:100%;background-color:burlywood;margin:0;border:solid;min-height:40px" @onclick="@(()=> Markread(item))">
+                                    <strong style="color:black;font-weight:bold;margin:5px 0 0 5px">@item.Msg</strong>
+                                    <br />
+                                    <small class="text-dark ml-2 mb-3">@item.date</small>
+                                    @*<hr />*@
+                                </div>
+                            }
+                        }
+                    }
+                    else
+                    {<p><span style="color:black">No Notification found </span></p>}
+                </div>
+                @*<div class="seeAll"><a href="#">See All</a></div>*@
+            </div>
+        </li>
+    </ul>
+</div>
+
+
+@*<NavLink class="nav-link" href="Logout" @onclick="@(()=> Logout())">*@
+<span class="oi" aria-hidden="true" style="color:white;margin-right:10px" @onclick="@(()=> Logout())"><a href="#" style="color:white">Logout</a></span>
+@*</NavLink>*@
+
+
+@code {
+
+    void Logout()
+    {
+        //StaticDataSource.userInfo = null;
+        StaticDataSource.appConfiguration = null;
+        StaticDataSource.DynamicObject = null;
+        StaticDataSource.DtDynamic = null;
+        StaticDataSource.DtAppConfig = null;
+        StaticDataSource.ParamList = null;
+        StaticDataSource.Xml = null;
+        StaticDataSource.ConnString = null;
+        StaticDataSource.StoreProcedure = null;
+        StaticDataSource.Action = null;
+        StaticDataSource.Tital = null;
+        StaticDataSource.PopHeadarMsg = null;
+        StaticDataSource.PopMsg = null;
+        StaticDataSource.IsInitialRenderAppConfig = false;
+        StaticDataSource.IsInitialRenderChartConfig = false;
+        StaticDataSource.IsInitialRender = false;
+        StaticDataSource.IsInitialRenderGrid = false;
+        StaticDataSource.IsInitialRenderChart = false;
+        StaticDataSource.ChartDataObj = null;
+        StaticDataSource.ChartdataTable = null;
+        StaticDataSource.chartDataList = null;
+        StaticDataSource.chartAttributesList = null;
+        navigationManager.NavigateTo("/");
+    }
+
+
+    private System.Timers.Timer _timer;
+    [Parameter]
+    public double Interval { get; set; }
+    private int ToastFlag = 0;
+    private string ToastContent;
+    SfToast ToastObj;
+    string NotificationDisplay = "none";
+    static bool IsNotificationListOpen = false;
+    string notificationwindowHieght;
+    string NotificationCountDisplay;
+    @inject SynGeniee.Components.ToastNotification  ToastServices
+
+    protected override void OnInitialized()
+    {
+        NotificationCountDisplay = StaticDataSource.NewNotificationCount == 0 ? "none" : "block";
+        notificationwindowHieght = (Convert.ToInt32(StaticDataSource.WindowsHeight) - 120).ToString() + "px";
+        _timer = new System.Timers.Timer(20000);
+        _timer.Elapsed += async (s, e) =>
+        {
+            await DbNotificationChanged();
+            //await InvokeAsync(StateHasChanged);
+        };
+        _timer.Enabled = true;
+    }
+
+    [Inject]
+    public IDynamicAPIService dynamicAPIService { get; set; }
+
+    private async Task DbNotificationChanged()
+    {
+        string conn = _configuration.GetConnectionString("DashBoardConnection");
+
+        //string storeProc = "GetNotification";
+        var result = await dynamicAPIService.GetNotificationData(conn, StaticDataSource.userInfo.Id, 1);
+        List<DashBoardModel.DbNotification> Objmenus = JsonConvert.DeserializeObject<List<DashBoardModel.DbNotification>>(result);
+
+        if (Objmenus.Count > 0)
+        {
+            int count = Objmenus.Count;
+            StaticDataSource.NewNotificationCount = StaticDataSource.NewNotificationCount + count;
+
+            //StateHasChanged();
+            //var recordToupdate = args.DBNotification;
+            //this.ToastContent = Objmenus.Select(a => a.Msg).FirstOrDefault();
+            foreach (var msg in Objmenus)
+            {
+                StaticDataSource.DbNotificationList.Prepend(msg);
+                //this.ToastContent = msg.Msg;
+                //if (!string.IsNullOrEmpty(ToastContent))
+                //{
+                ///await InvokeAsync(() =>
+                //{
+                //this.ToastObj.Show();
+                //  this.StateHasChanged();
+                //});
+                //}
+
+                this.ToastServices.Open(new SynGeniee.Components.ToastOptions()
+                {
+                    Title = "Notification",
+                    Content = msg.Msg, // Dynamic Content
+                });
+            }
+
+            await InvokeAsync(() =>
+            {
+                this.StateHasChanged();
+            });
+        }
+    }
+
+    private async Task HideToast()
+    {
+        await this.ToastObj.Hide();
+    }
+
+    public void Dispose()
+    {
+        this._timer.Dispose();
+    }
+
+    async Task OnOptionalMenuHide()
+    {
+        if (IsNotificationListOpen == false)
+        {
+            NotificationDisplay = "block";
+            IsNotificationListOpen = true;
+        }
+        else
+        {
+            NotificationDisplay = "none";
+            IsNotificationListOpen = false;
+        }
+    }
+
+    async Task MarkAllread()
+    {
+        string conn = _configuration.GetConnectionString("DashBoardConnection");
+        StaticDataSource.NewNotificationCount = 0;
+        NotificationCountDisplay = "none";
+        StaticDataSource.DbNotificationList.ForEach(a => a.Status = 1);
+        StateHasChanged();
+        var result = await dynamicAPIService.GetNotificationData(conn, StaticDataSource.userInfo.Id, 2);
+    }
+
+    async Task Markread(DashBoardModel.DbNotification item)
+    {
+        if (item.Status == 0)
+        {
+            string conn = _configuration.GetConnectionString("DashBoardConnection");
+            StaticDataSource.NewNotificationCount = StaticDataSource.NewNotificationCount - 1;
+
+            StaticDataSource.DbNotificationList.Where(b => b.Id == item.Id).ToList().ForEach(a => a.Status = 1);
+            StateHasChanged();
+            var result = await dynamicAPIService.GetNotificationData(conn, item.Id, 3);
+        }
+    }
+}

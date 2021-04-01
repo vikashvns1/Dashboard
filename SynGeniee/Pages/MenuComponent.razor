@@ -1,0 +1,233 @@
+﻿@layout AdminLayout
+@page "/MenuComponent"
+@inject NavigationManager urihelper;
+@using Microsoft.AspNetCore.WebUtilities;
+@using Microsoft.Extensions.Configuration
+@inject IConfiguration  _configuration
+@using DashBoardModel
+@inject Radzen.DialogService dialogService
+@inject NotificationService notificationService
+@inject TooltipService tooltipService
+@using Syncfusion.Blazor.Grids
+@using Syncfusion.Blazor.Data
+@using Syncfusion.Blazor.Buttons
+@using System.Collections.ObjectModel;
+@using Newtonsoft.Json;
+@using Syncfusion.Blazor.DropDowns
+
+@if (StaticDataSource.MenuItemList == null)
+{
+    <p><em>Loading....</em></p>
+    <RadzenProgressBar Mode="ProgressBarMode.Indeterminate"></RadzenProgressBar>
+}
+else
+{ <h2>Menu</h2>
+    <SfGrid @ref="DefaultGrid" TValue="DashBoardModel.MenuItem" Height="@Height" RowHeight="30" AllowFiltering="true" DataSource="@(StaticDataSource.MenuItemList)" Toolbar="@(new List<string>() { "Add" })">
+        <GridEditSettings AllowAdding="true" AllowEditing="true" AllowDeleting="true" AllowEditOnDblClick="false">
+        </GridEditSettings>
+        <GridFilterSettings Type="Syncfusion.Blazor.Grids.FilterType.Excel" ShowFilterBarStatus="true"></GridFilterSettings>
+        <GridEvents OnActionBegin="ActionBeginAsync" TValue="DashBoardModel.MenuItem"></GridEvents>
+        <GridColumns>
+            <GridColumn HeaderText="Manage Records" Width="140px">
+                <GridCommandColumns>
+                    <GridCommandColumn Type="CommandButtonType.Edit" ButtonOption="@(new CommandButtonOptions() {IconCss="e-icons e-edit", CssClass="e-flat" })"></GridCommandColumn>
+                    <GridCommandColumn Type="CommandButtonType.Delete" ButtonOption="@(new CommandButtonOptions() {IconCss="e-icons e-delete", CssClass="e-flat" })"></GridCommandColumn>
+                    <GridCommandColumn Type="CommandButtonType.Save" ButtonOption="@(new CommandButtonOptions() {IconCss="e-icons e-save", CssClass="e-flat" })"></GridCommandColumn>
+                    <GridCommandColumn Type="CommandButtonType.Cancel" ButtonOption="@(new CommandButtonOptions() {IconCss="e-icons e-cancel-icon", CssClass="e-flat" })"></GridCommandColumn>
+                </GridCommandColumns>
+            </GridColumn>
+            <GridColumn Field=@nameof(MI.Menu_id) Width="100px" Type="ColumnType.Number" EditorSettings="@EditParams" IsIdentity="true" IsPrimaryKey="true"></GridColumn>
+            @*<GridColumn Field=@nameof(MI.Parentmenu_id) Type="ColumnType.Number"></GridColumn>*@
+            <GridColumn Context="data" HeaderText="Parent Name">
+                <Template>
+                    @{
+                        int P_id = (data as DashBoardModel.MenuItem).Parentmenu_id;
+                        string P_Menu = StaticDataSource.MenuItemList.Where(b => b.Menu_id == P_id).Select(a => a.Menu).FirstOrDefault();
+                        <RadzenLabel Text="@P_Menu"></RadzenLabel>
+                    }
+                </Template>              
+            </GridColumn>
+
+            <GridColumn Field=@nameof(MI.Menu) HeaderText="Menu Name" Type="ColumnType.String" Width="200px"></GridColumn>
+            <GridColumn Field=@nameof(MI.PageName) Context="data" HeaderText="Landing Page" Type="ColumnType.String" Width="170px">
+                <Template>
+                    @{
+                        if (!string.IsNullOrEmpty((data as DashBoardModel.MenuItem).PageName))
+                        {
+                            string PageName = (data as DashBoardModel.MenuItem).PageName.Trim();
+                            string Active = PageName == "/Index" ? "Dashboard" : PageName == "/ReportComponent" ? "Report" : "ReportChart";
+                            <RadzenLabel Text="@Active" Style="width:100%"></RadzenLabel>
+                        }
+                        else
+                        {
+                            <RadzenLabel Text="Not Applicable" Style="width:100%"></RadzenLabel>
+                        }
+                    }
+                </Template>
+                <EditTemplate>
+                    <SfDropDownList TValue="string" TItem="PageName" ShowClearButton="true" @bind-Value="@((data as DashBoardModel.MenuItem).PageName)" Placeholder="Provider Name" DataSource="@_PageName">
+                        <DropDownListFieldSettings Value="ID" Text="Text"></DropDownListFieldSettings>
+                    </SfDropDownList>
+                </EditTemplate>
+            </GridColumn>
+            <GridColumn Field=@nameof(MI.UserId) Width="100px" Type="ColumnType.Number" EditorSettings="@EditParams" DefaultValue="@UserId" AllowAdding="false" AllowEditing="false"></GridColumn>
+            <GridColumn Field=@nameof(MI.Expand) Type="ColumnType.Boolean" Width="100px" EditorSettings="@EditParams" DefaultValue="false"></GridColumn>
+            <GridColumn Field=@nameof(MI.DashBoardNo) Type="ColumnType.Number" Width="150px" EditorSettings="@EditParams" DefaultValue="0"></GridColumn>
+            <GridColumn Field=@nameof(MI.MenuOrder) Type="ColumnType.Number" Width="120px" EditorSettings="@EditParams"></GridColumn>
+            <GridColumn Field=@nameof(MI.ComponentId) Context="data" Width="220" HeaderText="Report Title"  Visible="true" AllowFiltering="false">
+                <Template>
+                    @{
+                        if (((data as DashBoardModel.MenuItem).ComponentId)!=0)
+                        {
+                            int ComponentId = (data as DashBoardModel.MenuItem).ComponentId;
+                            string Title = _chartConfigurationList.Where(a=>a.Id==ComponentId).Select(b=>b.Title).FirstOrDefault();
+                            <RadzenLabel Text="@Title" Style="width:100%"></RadzenLabel>
+                        }
+                        else
+                        {
+                            <RadzenLabel Text="Not Applicable" Style="width:100%"></RadzenLabel>
+                        }
+                    }
+                </Template>
+                <EditTemplate>
+                    <SfDropDownList TValue="int" TItem="GetRequestConfiguration" ShowClearButton="true" @bind-Value="@((data as DashBoardModel.MenuItem).ComponentId)" Placeholder="Repot Title" DataSource="@_chartConfigurationList">
+                        <DropDownListFieldSettings Value="Id" Text="Title"></DropDownListFieldSettings>
+                    </SfDropDownList>
+                </EditTemplate>
+            </GridColumn>
+            @*<GridColumn Field=@nameof(MI.ReportTitle) Context="data" Width="220px" Type="ColumnType.String">
+                <EditTemplate>
+                    <SfDropDownList TValue="string" TItem="GetRequestConfiguration" ShowClearButton="true" @bind-Value="@((data as DashBoardModel.MenuItem).ReportTitle)" Placeholder="Provider Name" DataSource="@_chartConfigurationList">
+                        <DropDownListFieldSettings Value="Id" Text="Title"></DropDownListFieldSettings>
+                    </SfDropDownList>
+                </EditTemplate>
+            </GridColumn>*@
+        <GridColumn Field=@nameof(MI.ConnectionId) Context="data" HeaderText="Connection Name" Width="220" Visible="true" AllowFiltering="false">
+            <Template>
+                @{
+                    if (((data as DashBoardModel.MenuItem).ConnectionId) != 0)
+                    {
+                        int ConnectionId = (data as DashBoardModel.MenuItem).ConnectionId;
+                        string connectionName = DBC.Where(a => a.Id == ConnectionId).Select(b => b.ConnectionName).FirstOrDefault();
+                        <RadzenLabel Text="@connectionName" Style="width:100%"></RadzenLabel>
+                    }
+                    else
+                    {
+                        <RadzenLabel Text="Not Applicable" Style="width:100%"></RadzenLabel>
+                    }
+                }
+            </Template>
+            <EditTemplate>
+                <SfDropDownList TValue="int" TItem="DbConnection" ShowClearButton="true" @bind-Value="@((data as DashBoardModel.MenuItem).ConnectionId)" Placeholder="Connection Name" DataSource="@DBC">
+                    <DropDownListFieldSettings Value="Id" Text="ConnectionName"></DropDownListFieldSettings>
+                </SfDropDownList>
+            </EditTemplate>
+        </GridColumn>
+            @*<GridColumn Field=@nameof(MI.ConnectionName) Context="data" Width="220px" Type="ColumnType.String">
+                <EditTemplate>
+                    <SfDropDownList TValue="string" TItem="DbConnection" ShowClearButton="true" @bind-Value="@((data as DashBoardModel.MenuItem).ConnectionName)"  Placeholder="Provider Name" DataSource="@DBC">
+                        <DropDownListFieldSettings Value="Id" Text="ConnectionName"></DropDownListFieldSettings>
+                    </SfDropDownList>
+                </EditTemplate>
+            </GridColumn>*@
+            <GridColumn Field=@nameof(MI.Bgcolor) Width="150px" Type="ColumnType.String"></GridColumn>
+        </GridColumns>
+    </SfGrid>
+}
+@code {
+    public DashBoardModel.MenuItem MI { get; set; }
+    static string conn;
+    [Inject]
+    public IDynamicAPIService dynamicAPIService { get; set; }
+    [Inject]
+    public NavigationManager Nav { get; set; }
+    public string Height = (StaticDataSource.WindowsHeight - 220) + "px";
+    public int UserId = 0;
+    public List<DbConnection> DBC = new List<DbConnection>();
+    public IEnumerable<GetRequestConfiguration> _chartConfigurationList = new List<GetRequestConfiguration>();
+    protected override async Task OnInitializedAsync()
+    {
+        System.Uri uri;
+        uri = Nav.ToAbsoluteUri(Nav.Uri);
+        if (QueryHelpers.ParseQuery(uri.Query).TryGetValue("Id", out var Id))
+        {
+            UserId = Convert.ToInt32(Id);
+
+            conn = _configuration.GetConnectionString("DashBoardConnection");
+
+            var menu = await dynamicAPIService.GetMenuData(conn, Convert.ToInt32(Id));
+            var _Objmenus = JsonConvert.DeserializeObject<List<DashBoardModel.MenuItem>>(menu);
+
+            ObservableCollection<DashBoardModel.MenuItem> Objmenus = new ObservableCollection<DashBoardModel.MenuItem>(_Objmenus.OrderBy(a => a.MenuOrder).ToList());
+            StaticDataSource.MenuItemList = Objmenus;
+
+            var db = await dynamicAPIService.GetDBConnections(conn, Convert.ToInt32(Id));
+            DBC = JsonConvert.DeserializeObject<List<DbConnection>>(db);
+
+            string storeProc = "GetConfiguration";
+
+            var d= await dynamicAPIService.GetChartsConfiguration(conn, storeProc, UserId);
+            _chartConfigurationList = d.Where(a => a.DashBoardNo == 0 && a.ChartType == "Report").ToList();
+        }
+    }
+
+    void ShowTooltip(ElementReference elementReference, string content, TooltipOptions options = null) => tooltipService.Open(elementReference, content, options);
+
+    public SfGrid<DashBoardModel.MenuItem> DefaultGrid;
+    public async Task ActionBeginAsync(ActionEventArgs<DashBoardModel.MenuItem> args)
+    {
+        if (args.RequestType == Syncfusion.Blazor.Grids.Action.Save)
+        {
+            //args.Cancel = true;
+            int i = await dynamicAPIService.AddEditUserMenu(conn, args.Data);
+            var found = StaticDataSource.MenuItemList.FirstOrDefault(c => c.Menu_id == args.Data.Menu_id);
+
+            if (i == 0)
+            {
+                int index = StaticDataSource.MenuItemList.IndexOf(found);
+                StaticDataSource.MenuItemList[index] = args.Data;
+                notificationService.Notify(new NotificationMessage() { Severity = NotificationSeverity.Success, Summary = "Menu Item ", Detail = $"Menu Item has Updated Successfully.", Duration = 4000 });
+            }
+            else
+            {
+                args.Data.Menu_id = i;
+
+                //StaticDataSource.AdminData.Add(data);
+                notificationService.Notify(new NotificationMessage() { Severity = NotificationSeverity.Success, Summary = "Menu Item", Detail = $"Menu Item has beed added Successfully.", Duration = 4000 });
+            }
+            await DefaultGrid.CloseEdit();
+
+        }
+        else if (args.RequestType == Syncfusion.Blazor.Grids.Action.Delete)
+        {
+            //args.Cancel = true;
+            int i = await dynamicAPIService.DeleteUser(conn, args.Data.Menu_id, "DeleteUserDbConnection");
+            if (i == -1)
+            {
+                StaticDataSource.MenuItemList.Remove(args.Data);
+                notificationService.Notify(new NotificationMessage() { Severity = NotificationSeverity.Success, Summary = "Menu Item", Detail = $"Menu Item has Deleted Successfully.", Duration = 4000 });
+            }
+        }
+        await InvokeAsync(() =>
+        {
+            this.StateHasChanged();
+        });
+    }
+
+    public IEditorSettings EditParams = new NumericEditCellParams
+    {
+        Params = new Syncfusion.Blazor.Inputs.NumericTextBoxModel<object>() { ShowClearButton = true, ShowSpinButton = false }
+    };
+
+    public class PageName
+    {
+        public string ID { get; set; }
+        public string Text { get; set; }
+    }
+    List<PageName> _PageName = new List<PageName> {
+    new PageName() { ID= "/Index", Text= "Index" },
+    new PageName() { ID= "/ReportComponent", Text= "Report" },
+    new PageName() { ID= "/ReportChart", Text= "Report Chart" },
+    //new PageName() { ID= "Menu Root", Text= "Menu Root" },
+  };
+}

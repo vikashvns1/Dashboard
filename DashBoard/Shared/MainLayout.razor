@@ -1,0 +1,131 @@
+﻿@using Microsoft.AspNetCore.Components
+@using Microsoft.AspNetCore.Http
+@using Radzen.Blazor
+@using DashBoardModel
+@inherits LayoutComponentBase
+@inject ExampleService ExampleService
+@inject NavigationManager UriHelper
+@inject IJSRuntime JSRuntime
+@inject IHttpContextAccessor httpContextAccessor
+@inject NavigationManager navigationManager
+
+<RadzenDialog />
+<RadzenNotification />
+
+<RadzenHeader Style="background-color:#303EA0;color:white">
+    <ChildContent>
+        <div class="row justify-content-start align-items-center">
+            <div class="col-6 d-flex align-items-center">
+                <RadzenSidebarToggle Click="@(args => { sidebarExpanded = !sidebarExpanded; bodyExpanded = !bodyExpanded; })" Style="background-color:#303EA0;color:white;border-color:#303EA0">
+                </RadzenSidebarToggle>
+                <RadzenImage Path="/Images/Banner1.jpeg" Style="border-color:#303EA0" />
+
+                @*<RadzenLabel Text="Smart Data Management">
+                    </RadzenLabel>*@
+            </div>
+
+            <div class="col-6 d-flex align-items-center justify-content-end">
+                <div class="d-none d-md-inline-flex align-items-center">
+                    <UserStatus />
+
+                </div>
+                @*<label class="d-none d-sm-inline-block">Theme:</label>
+                    <RadzenDropDown style="margin:0 1rem" TValue="string" TextProperty="Text" ValueProperty="Value" Data="@themes" Value="@ThemeState.CurrentTheme" Change="@ChangeTheme" />*@
+            </div>
+        </div>
+    </ChildContent>
+</RadzenHeader>
+<div style="width:100%;margin-top:20px" class="container-fluid">
+    <RadzenBody @ref="@body0" @bind-Expanded="@bodyExpanded">
+        <ChildContent>
+            <RadzenContentContainer Name="main" Style="width:100%">
+                @Body
+            </RadzenContentContainer>
+        </ChildContent>
+    </RadzenBody>
+</div>
+@*<RadzenSidebar @ref="@sidebar0" @bind-Expanded="@sidebarExpanded" Style="background-color:#303EA0;margin-top:80px;">
+    <ChildContent>
+       
+        <RadzenPanelMenu>
+            @foreach (var category in StaticDataSource.MenuItemList.Where(a => a.Parentmenu_id == 0))
+            {
+
+<RadzenPanelMenuItem Selected="false" @bind-Expanded="@category.Expand" Text="@category.Menu" Path="@category.PageName" Icon="@category.Icon" Style="background-color:#303EA0;color:white;">
+    @if (category.Expand == true)
+    {
+@foreach (var example in StaticDataSource.MenuItemList.Where(child => child.Parentmenu_id == category.Menu_id))
+{
+<RadzenPanelMenuItem Text="@example.Menu" Selected="false" Icon="@example.Icon" Style="background-color:#303EA0;color:white;" @onclick="@((args) => OnClick(category))" />}}
+</RadzenPanelMenuItem>}
+        </RadzenPanelMenu>
+    </ChildContent>
+</RadzenSidebar>*@
+<Menu sidebar0="sidebar0" sidebarExpanded="sidebarExpanded"></Menu>
+@*<RadzenFooter Style="background-color:#303EA0;color:white;">
+    <ChildContent>
+        <RadzenLabel Text="RARR Technologies, Copyright &copy; 2020">
+        </RadzenLabel>
+    </ChildContent>
+</RadzenFooter>*@
+@code { RadzenSidebar sidebar0;
+    RadzenBody body0;
+    bool sidebarExpanded = false;
+    bool bodyExpanded = true;
+
+    IEnumerable<Example> examples;
+
+    void OnMenuClick(MenuItem arg)
+    {
+        StaticDataSource.ComponentId = arg.ComponentId;
+    }
+
+    void OnClick(MenuItem arg)
+    {
+        StaticDataSource.ComponentId = arg.ComponentId;
+        navigationManager.NavigateTo(arg.PageName);
+
+    }
+
+    protected override void OnInitialized()
+    {
+        //StaticDataSource.ComponentId = 0;
+
+        sidebarExpanded = false;
+        bodyExpanded = true;
+        if (httpContextAccessor != null && httpContextAccessor.HttpContext != null &&
+     httpContextAccessor.HttpContext.Request != null && httpContextAccessor.HttpContext.Request.Headers.ContainsKey("User-Agent"))
+        {
+            var userAgent = httpContextAccessor.HttpContext.Request.Headers["User-Agent"].FirstOrDefault();
+            if (!string.IsNullOrEmpty(userAgent))
+            {
+                if (userAgent.Contains("iPhone") || userAgent.Contains("Android") || userAgent.Contains("Googlebot"))
+                {
+                    sidebarExpanded = false;
+                    bodyExpanded = true;
+                }
+            }
+        }
+
+        examples = ExampleService.Examples;
+
+        System.Threading.Thread.CurrentThread.CurrentCulture = new System.Globalization.CultureInfo("en-US");
+    }
+
+    //protected override async Task OnAfterRenderAsync(bool firstRender)
+    //{
+    //    if (!firstRender)
+    //    {
+    //        var example = ExampleService.FindCurrent(UriHelper.ToAbsoluteUri(UriHelper.Uri));
+
+    //        await JSRuntime.InvokeVoidAsync("setTitle", ExampleService.TitleFor(example));
+    //    }
+    //}
+
+    //void FilterPanelMenu(ChangeEventArgs args)
+    //{
+    //    var term = args.Value.ToString();
+
+    //    examples = ExampleService.Filter(term);
+    //} 
+} 

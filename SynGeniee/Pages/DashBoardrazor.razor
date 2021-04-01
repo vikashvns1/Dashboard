@@ -1,0 +1,776 @@
+﻿@using System.Data;
+@using System.Dynamic;
+@using System.Collections.Generic;
+@using System.Collections.ObjectModel;
+@using System.Linq;
+@using System.Threading.Tasks;
+@using Newtonsoft.Json;
+@using DashBoardModel;
+@inject Radzen.DialogService dialogService
+
+<style>
+    .e-export-icon::before {
+        content: '\e780';
+    }
+
+    .e-print-icon::before {
+        content: '\e743';
+    }
+
+    .e-refresh-icon::before {
+        content: '\e710';
+    }
+
+    .e_expand-icon::before {
+        content: '\e777';
+    }
+
+    .e_more-icon::before {
+        content: '\e71b';
+        /*background-color: white;
+        border-color: white;
+        color: black;*/
+    }
+
+    .e_more {
+        margin: 10px;
+        background-color: black;
+        border-color: white;
+        color: black;
+        content: '\e71b';
+    }
+
+    .ulMenu {
+        display: block;
+        /*        background: #45619D;
+    */ list-style: none;
+        margin: 0;
+        padding: 12px 10px;
+        height: 21px;
+    }
+
+        .ulMenu li {
+            float: left;
+            font: 13px helvetica;
+            font-weight: bold;
+            margin: 3px 0;
+        }
+
+            .ulMenu li a {
+                color: #FFF;
+                text-decoration: none;
+                padding: 6px 15px;
+                cursor: pointer;
+            }
+
+                .ulMenu li a:hover {
+                    background: #425B90;
+                    text-decoration: none;
+                    cursor: pointer;
+                }
+
+    #Menu_Container {
+        position: relative;
+    }
+
+    /* A CIRCLE LIKE BUTTON IN THE TOP MENU. */
+    #Menu_Button {
+        width: 20px;
+        height: 20px;
+        line-height: 20px;
+        /*border-radius: 50%;
+            -moz-border-radius: 50%;
+            -webkit-border-radius: 50%;
+            background: #FFF;*/
+        margin: -8px 10px 0 10px;
+        cursor: pointer;
+    }
+
+    /* THE NOTIFICAIONS WINDOW. THIS REMAINS HIDDEN WHEN THE PAGE LOADS. */
+    #PopMenu {
+        display: none;
+        width: 100%;
+/*        position: absolute;
+*/        top: 10px;
+        left: -8px;
+        background: #FFF;
+        border: solid 1px rgba(100, 100, 100, .20);
+        -webkit-box-shadow: 0 3px 8px rgba(0, 0, 0, .20);
+        z-index: 1;
+    }
+    /* AN ARROW LIKE STRUCTURE JUST OVER THE NOTIFICATIONS WINDOW */
+</style>
+@if (ChartSource.ChartType == "Line")
+{
+    <div class="card" style="box-shadow: 5px 10px 18px #888888; border-radius: 20px;height:100%">
+        <div>
+            <ul class="ulMenu">
+                <li id="Menu_Container">
+                    <div id="Menu_Button" @onclick="@(()=>OnOptionalMenuHide())" style="cursor: pointer">
+                        <span><i style="font-size:20px" class="fa">&#xf141;</i> </span>
+                    </div>
+
+                    <!--THE Menu DROPDOWN BOX.-->
+                    <div id="PopMenu" style="display: @IsOptionMenuHide;">
+                        <div>
+                            @if (ChartSource.IsFilterOn == 1)
+                            {
+
+                                <div class="row" style="padding:5px 15px 0 15px;">
+                                    <FilterComponent ChartSource="@ChartSource" DropDownChange="@UpdateChart" Submite="@DateRange"></FilterComponent>
+                                </div>
+                            }
+                            <div class="row" style="margin-bottom:5px;margin-top:5px">
+                                <div style="margin-left:20px">
+                                    <Syncfusion.Blazor.Buttons.SfCheckBox Label="Show Label" LabelPosition="Syncfusion.Blazor.Buttons.LabelPosition.After" @bind-Checked="@IsLableShow"></Syncfusion.Blazor.Buttons.SfCheckBox>
+                                    <Syncfusion.Blazor.Buttons.SfButton OnClick="@Click" IconCss="e-icons e-export-icon" CssClass="e-flat e-small"></Syncfusion.Blazor.Buttons.SfButton>
+                                    <Syncfusion.Blazor.Buttons.SfButton OnClick="@ClickPrint" IconCss="e-icons e-print-icon" CssClass="e-flat e-small"></Syncfusion.Blazor.Buttons.SfButton>
+                                    <Syncfusion.Blazor.Buttons.SfButton OnClick="()=>RefreshChartData()" IconCss="e-icons e-refresh-icon" CssClass="e-flat e-small"></Syncfusion.Blazor.Buttons.SfButton>
+                                    @if (IsPopUpOpen == 1)
+                                    {
+                                        <Syncfusion.Blazor.Buttons.SfButton OnClick="@(() => OnClick(ChartSource))" IconCss="e-icons e_expand-icon" CssClass="e-flat e-small"></Syncfusion.Blazor.Buttons.SfButton>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </li>
+            </ul>
+        </div>
+        <div class="card-body">
+            <SfChart AllowExport="true" @ref="@ChartObj"   Height="@Height" Width="@Width" Title="@ChartSource.Title">
+                <ChartPrimaryXAxis Title="@ChartSource.XAxixDisplayName" ValueType="Syncfusion.Blazor.Charts.ValueType.Category" LabelIntersectAction="LabelIntersectAction.Rotate45"></ChartPrimaryXAxis>
+                <ChartPrimaryYAxis LabelFormat="@ChartSource.FormateString" Title="@ChartSource.YAxixDisplayName" ValueType="Syncfusion.Blazor.Charts.ValueType.Double"></ChartPrimaryYAxis>
+                <ChartSeriesCollection>
+                    <ChartSeries DataSource="@updateedDataSource" Low="0.00" Fill="Green" XName="XData" YName="YData1" Type="ChartSeriesType.Line" Name="@ChartSource.Label1">
+                        <ChartMarker>
+                            <ChartDataLabel Visible="@IsLableShow" EnableRotation="true" LabelIntersectAction="true" Position="Syncfusion.Blazor.Charts.LabelPosition.Top">
+                                @*<ChartDataLabelFont FontWeight="600" Color="#ffffff"></ChartDataLabelFont>*@
+                            </ChartDataLabel>
+                        </ChartMarker>
+                    </ChartSeries>
+
+                    @if (ChartSource.Label2 != null)
+                    {
+                        <ChartSeries DataSource="@updateedDataSource" XName="XData" Fill="Blue" YName="YData2" Type="ChartSeriesType.Line" Name="@ChartSource.Label2">
+                            <ChartMarker>
+                                <ChartDataLabel Visible="@IsLableShow" LabelIntersectAction="true" Position="Syncfusion.Blazor.Charts.LabelPosition.Top">
+                                    @*<ChartDataLabelFont FontWeight="600" Color="#ffffff"></ChartDataLabelFont>*@
+                                </ChartDataLabel>
+                            </ChartMarker>
+                        </ChartSeries>
+                    }
+                    @if (ChartSource.Label3 != null)
+                    {
+                        <ChartSeries DataSource="@updateedDataSource" XName="XData" Fill="Red" YName="YData3" Type="ChartSeriesType.Line" Name="@ChartSource.Label2">
+                            <ChartMarker>
+                                <ChartDataLabel Visible="@IsLableShow" LabelIntersectAction="true" Position="Syncfusion.Blazor.Charts.LabelPosition.Top">
+                                    <ChartDataLabelFont FontWeight="600" Color="#ffffff"></ChartDataLabelFont>
+                                </ChartDataLabel>
+                            </ChartMarker>
+                        </ChartSeries>
+                    }
+                    @if (ChartSource.Label4 != null)
+                    {
+                        <ChartSeries DataSource="@updateedDataSource" XName="XData" Fill="Blue" YName="YData4" Type="ChartSeriesType.Line" Name="@ChartSource.Label2">
+                            <ChartMarker>
+                                <ChartDataLabel Visible="@IsLableShow" LabelIntersectAction="true" Position="Syncfusion.Blazor.Charts.LabelPosition.Top">
+                                    @*<ChartDataLabelFont FontWeight="600" Color="#ffffff"></ChartDataLabelFont>*@
+                                </ChartDataLabel>
+                            </ChartMarker>
+                        </ChartSeries>
+                    }
+                    @if (ChartSource.Label5 != null)
+                    {
+                        <ChartSeries DataSource="@updateedDataSource" XName="XData" Fill="Blue" YName="YData5" Type="ChartSeriesType.Line" Name="@ChartSource.Label2">
+                            <ChartMarker>
+                                <ChartDataLabel Visible="@IsLableShow" LabelIntersectAction="true" Position="Syncfusion.Blazor.Charts.LabelPosition.Top">
+                                    @*<ChartDataLabelFont FontWeight="600" Color="#ffffff"></ChartDataLabelFont>*@
+                                </ChartDataLabel>
+                            </ChartMarker>
+                        </ChartSeries>
+                    }
+
+                    <ChartTooltipSettings Enable="true"></ChartTooltipSettings>
+                </ChartSeriesCollection>
+                <ChartLegendSettings Visible="true" Position="Syncfusion.Blazor.Charts.LegendPosition.Bottom"></ChartLegendSettings>
+            </SfChart>
+        </div>
+    </div>
+}
+else if (ChartSource.ChartType == "Area")
+{
+    <div class="card" style="box-shadow: 5px 10px 18px #888888; border-radius: 20px;height:100%">
+        <div>
+            <ul class="ulMenu">
+                <li id="Menu_Container">
+                    <div id="Menu_Button" @onclick="@(()=>OnOptionalMenuHide())" style="cursor: pointer">
+                        <span><i style="font-size:20px" class="fa">&#xf141;</i> </span>
+                    </div>
+
+                    <!--THE Menu DROPDOWN BOX.-->
+                    <div id="PopMenu" style="display: @IsOptionMenuHide;">
+                        <div>
+                            @if (ChartSource.IsFilterOn == 1)
+                            {
+
+                                <div class="row" style="padding:5px 15px 0 15px;">
+                                    <FilterComponent ChartSource="@ChartSource" DropDownChange="@UpdateChart" Submite="@DateRange"></FilterComponent>
+                                </div>
+                            }
+                            <div class="row" style="margin-bottom:5px;margin-top:5px">
+                                <div style="margin-left:20px">
+                                    <Syncfusion.Blazor.Buttons.SfCheckBox Label="Show Label" LabelPosition="Syncfusion.Blazor.Buttons.LabelPosition.After" @bind-Checked="@IsLableShow"></Syncfusion.Blazor.Buttons.SfCheckBox>
+                                    <Syncfusion.Blazor.Buttons.SfButton OnClick="@Click" IconCss="e-icons e-export-icon" CssClass="e-flat e-small"></Syncfusion.Blazor.Buttons.SfButton>
+                                    <Syncfusion.Blazor.Buttons.SfButton OnClick="@ClickPrint" IconCss="e-icons e-print-icon" CssClass="e-flat e-small"></Syncfusion.Blazor.Buttons.SfButton>
+                                    <Syncfusion.Blazor.Buttons.SfButton OnClick="()=>RefreshChartData()" IconCss="e-icons e-refresh-icon" CssClass="e-flat e-small"></Syncfusion.Blazor.Buttons.SfButton>
+                                    @if (IsPopUpOpen == 1)
+                                    {
+                                        <Syncfusion.Blazor.Buttons.SfButton OnClick="@(() => OnClick(ChartSource))" IconCss="e-icons e_expand-icon" CssClass="e-flat e-small"></Syncfusion.Blazor.Buttons.SfButton>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </li>
+            </ul>
+        </div>
+        <div class="card-body">
+            <SfChart AllowExport="true" @ref="@ChartObj"   Height="@Height" Width="@Width" Title="@ChartSource.Title">
+                <ChartPrimaryXAxis Title="@ChartSource.XAxixDisplayName" ValueType="Syncfusion.Blazor.Charts.ValueType.Category" LabelIntersectAction="LabelIntersectAction.Rotate45"></ChartPrimaryXAxis>
+                <ChartPrimaryYAxis LabelFormat="@ChartSource.FormateString" Title="@ChartSource.YAxixDisplayName" ValueType="Syncfusion.Blazor.Charts.ValueType.Double"></ChartPrimaryYAxis>
+                <ChartSeriesCollection>
+                    <ChartSeries DataSource="@updateedDataSource" Low="0.00" Fill="Green" XName="XData" YName="YData1" Type="ChartSeriesType.Area" Name="@ChartSource.Label1">
+                        <ChartMarker>
+                            <ChartDataLabel Visible="@IsLableShow" EnableRotation="true" LabelIntersectAction="true" Position="Syncfusion.Blazor.Charts.LabelPosition.Top">
+                                @*<ChartDataLabelFont FontWeight="600" Color="#ffffff"></ChartDataLabelFont>*@
+                            </ChartDataLabel>
+                        </ChartMarker>
+                    </ChartSeries>
+
+                    @if (ChartSource.Label2 != null)
+                    {
+                        <ChartSeries DataSource="@updateedDataSource" XName="XData" Fill="Blue" YName="YData2" Type="ChartSeriesType.Area" Name="@ChartSource.Label2">
+                            <ChartMarker>
+                                <ChartDataLabel Visible="@IsLableShow" LabelIntersectAction="true" Position="Syncfusion.Blazor.Charts.LabelPosition.Top">
+                                    @*<ChartDataLabelFont FontWeight="600" Color="#ffffff"></ChartDataLabelFont>*@
+                                </ChartDataLabel>
+                            </ChartMarker>
+                        </ChartSeries>
+                    }
+                    @if (ChartSource.Label3 != null)
+                    {
+                        <ChartSeries DataSource="@updateedDataSource" XName="XData" Fill="Red" YName="YData3" Type="ChartSeriesType.Area" Name="@ChartSource.Label2">
+                            <ChartMarker>
+                                <ChartDataLabel Visible="@IsLableShow" LabelIntersectAction="true" Position="Syncfusion.Blazor.Charts.LabelPosition.Top">
+                                    @*<ChartDataLabelFont FontWeight="600" Color="#ffffff"></ChartDataLabelFont>*@
+                                </ChartDataLabel>
+                            </ChartMarker>
+                        </ChartSeries>
+                    }
+                    @if (ChartSource.Label4 != null)
+                    {
+                        <ChartSeries DataSource="@updateedDataSource" XName="XData" Fill="Blue" YName="YData4" Type="ChartSeriesType.Area" Name="@ChartSource.Label2">
+                            <ChartMarker>
+                                <ChartDataLabel Visible="@IsLableShow" LabelIntersectAction="true" Position="Syncfusion.Blazor.Charts.LabelPosition.Top">
+                                    @*<ChartDataLabelFont FontWeight="600" Color="#ffffff"></ChartDataLabelFont>*@
+                                </ChartDataLabel>
+                            </ChartMarker>
+                        </ChartSeries>
+                    }
+                    @if (ChartSource.Label5 != null)
+                    {
+                        <ChartSeries DataSource="@updateedDataSource" XName="XData" Fill="Blue" YName="YData5" Type="ChartSeriesType.Area" Name="@ChartSource.Label2">
+                            <ChartMarker>
+                                <ChartDataLabel Visible="@IsLableShow" LabelIntersectAction="true" Position="Syncfusion.Blazor.Charts.LabelPosition.Top">
+                                    @*<ChartDataLabelFont FontWeight="600" Color="#ffffff"></ChartDataLabelFont>*@
+                                </ChartDataLabel>
+                            </ChartMarker>
+                        </ChartSeries>
+                    }
+
+                    <ChartTooltipSettings Enable="true"></ChartTooltipSettings>
+                </ChartSeriesCollection>
+                <ChartLegendSettings Visible="true" Position="Syncfusion.Blazor.Charts.LegendPosition.Bottom"></ChartLegendSettings>
+            </SfChart>
+        </div>
+    </div>
+
+
+}
+else if (ChartSource.ChartType == "Column")
+{
+    <div class="card" style="box-shadow: 5px 10px 18px #888888; border-radius: 20px;">
+        <div>
+            <ul class="ulMenu">
+                <li id="Menu_Container">
+                    <div id="Menu_Button" @onclick="@(()=>OnOptionalMenuHide())" style="cursor: pointer">
+                        <span><i style="font-size:20px" class="fa">&#xf141;</i> </span>
+                    </div>
+
+                    <!--THE Menu DROPDOWN BOX.-->
+                    <div id="PopMenu" style="display: @IsOptionMenuHide;">
+                        <div>
+                            @if (ChartSource.IsFilterOn == 1)
+                            {
+
+                                <div class="row" style="padding:5px 15px 0 15px;">
+                                    <FilterComponent ChartSource="@ChartSource" DropDownChange="@UpdateChart" Submite="@DateRange"></FilterComponent>
+                                </div>
+                            }
+                            <div class="row" style="margin-bottom:5px;margin-top:5px">
+                                <div style="margin-left:20px">
+                                    <Syncfusion.Blazor.Buttons.SfCheckBox Label="Show Label" LabelPosition="Syncfusion.Blazor.Buttons.LabelPosition.After" @bind-Checked="@IsLableShow"></Syncfusion.Blazor.Buttons.SfCheckBox>
+                                    <Syncfusion.Blazor.Buttons.SfButton OnClick="@Click" IconCss="e-icons e-export-icon" CssClass="e-flat e-small"></Syncfusion.Blazor.Buttons.SfButton>
+                                    <Syncfusion.Blazor.Buttons.SfButton OnClick="@ClickPrint" IconCss="e-icons e-print-icon" CssClass="e-flat e-small"></Syncfusion.Blazor.Buttons.SfButton>
+                                    <Syncfusion.Blazor.Buttons.SfButton OnClick="()=>RefreshChartData()" IconCss="e-icons e-refresh-icon" CssClass="e-flat e-small"></Syncfusion.Blazor.Buttons.SfButton>
+                                    @if (IsPopUpOpen == 1)
+                                    {
+                                        <Syncfusion.Blazor.Buttons.SfButton OnClick="@(() => OnClick(ChartSource))" IconCss="e-icons e_expand-icon" CssClass="e-flat e-small"></Syncfusion.Blazor.Buttons.SfButton>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </li>
+            </ul>
+        </div>
+        <div class="card-body">
+            <SfChart  EnableExport="true" AllowExport="true" @ref="@ChartObj"   Height="@Height" Width="@Width" Title="@ChartSource.Title">
+                <ChartPrimaryXAxis Title="@ChartSource.XAxixDisplayName" ValueType="Syncfusion.Blazor.Charts.ValueType.Category" LabelIntersectAction="LabelIntersectAction.Rotate45"></ChartPrimaryXAxis>
+                <ChartPrimaryYAxis LabelFormat="@ChartSource.FormateString" Title="@ChartSource.YAxixDisplayName" ValueType="Syncfusion.Blazor.Charts.ValueType.Double"></ChartPrimaryYAxis>
+                <ChartSeriesCollection>
+                    <ChartSeries DataSource="@updateedDataSource" Low="0.00" Fill="@ChartSource.Y1Color" XName="XData" YName="YData1" Type="ChartSeriesType.Column" Name="@ChartSource.Label1">
+                        <ChartMarker>
+                            <ChartDataLabel Visible="@IsLableShow" EnableRotation="true" LabelIntersectAction="Hide"  Position="Syncfusion.Blazor.Charts.LabelPosition.Top">
+                                @*<ChartDataLabelFont FontWeight="600"></ChartDataLabelFont>*@
+                            </ChartDataLabel>
+                        </ChartMarker>
+                    </ChartSeries>
+
+                    @if (ChartSource.Label2 != null)
+                    {
+                        <ChartSeries DataSource="@updateedDataSource" XName="XData" Fill="@ChartSource.Y2Color" YName="YData2" Type="ChartSeriesType.Column" Name="@ChartSource.Label2">
+                            <ChartMarker>
+                                <ChartDataLabel Visible="@IsLableShow" LabelIntersectAction="true" Position="Syncfusion.Blazor.Charts.LabelPosition.Top">
+                                    @*<ChartDataLabelFont FontWeight="600" Color="#ffffff"></ChartDataLabelFont>*@
+                                </ChartDataLabel>
+                            </ChartMarker>
+                        </ChartSeries>
+                    }
+                    @if (ChartSource.Label3 != null)
+                    {
+                        <ChartSeries DataSource="@updateedDataSource" XName="XData" Fill="@ChartSource.Y3Color" YName="YData3" Type="ChartSeriesType.Column" Name="@ChartSource.Label2">
+                            <ChartMarker>
+                                <ChartDataLabel Visible="@IsLableShow" LabelIntersectAction="true" Position="Syncfusion.Blazor.Charts.LabelPosition.Top">
+                                    @*<ChartDataLabelFont FontWeight="600" Color="#ffffff"></ChartDataLabelFont>*@
+                                </ChartDataLabel>
+                            </ChartMarker>
+                        </ChartSeries>
+                    }
+                    @if (ChartSource.Label4 != null)
+                    {
+                        <ChartSeries DataSource="@updateedDataSource" XName="XData" Fill="@ChartSource.Y4Color" YName="YData4" Type="ChartSeriesType.Column" Name="@ChartSource.Label2">
+                            <ChartMarker>
+                                <ChartDataLabel Visible="@IsLableShow" LabelIntersectAction="true" Position="Syncfusion.Blazor.Charts.LabelPosition.Top">
+                                    @*<ChartDataLabelFont FontWeight="600" Color="#ffffff"></ChartDataLabelFont>*@
+                                </ChartDataLabel>
+                            </ChartMarker>
+                        </ChartSeries>
+                    }
+                    @if (ChartSource.Label5 != null)
+                    {
+                        <ChartSeries DataSource="@updateedDataSource" XName="XData" Fill="@ChartSource.Y5Color" YName="YData5" Type="ChartSeriesType.Column" Name="@ChartSource.Label2">
+                            <ChartMarker>
+                                <ChartDataLabel Visible="@IsLableShow"  LabelIntersectAction="true" Position="Syncfusion.Blazor.Charts.LabelPosition.Top" >
+                                    @*<ChartDataLabelFont FontWeight="600" Color="#ffffff"></ChartDataLabelFont>*@
+                                </ChartDataLabel>
+                            </ChartMarker>
+                        </ChartSeries>
+                    }
+
+                    <ChartTooltipSettings Enable="true"></ChartTooltipSettings>
+                </ChartSeriesCollection>
+                <ChartLegendSettings Visible="true" ToggleVisibility="true" Position="Syncfusion.Blazor.Charts.LegendPosition.Top"></ChartLegendSettings>
+            </SfChart>
+        </div>
+    </div>
+
+
+}
+else if (ChartSource.ChartType == "Bar")
+{
+    <div class="card" style="box-shadow: 5px 10px 18px #888888; border-radius: 20px;height:100%">
+        <div>
+            <ul class="ulMenu">
+                <li id="Menu_Container">
+                    <div id="Menu_Button" @onclick="@(()=>OnOptionalMenuHide())" style="cursor: pointer">
+                        <span><i style="font-size:20px" class="fa">&#xf141;</i> </span>
+                    </div>
+
+                    <!--THE Menu DROPDOWN BOX.-->
+                    <div id="PopMenu" style="display: @IsOptionMenuHide;">
+                        <div>
+                            @if (ChartSource.IsFilterOn == 1)
+                            {
+
+                                <div class="row" style="padding:5px 15px 0 15px;">
+                                    <FilterComponent ChartSource="@ChartSource" DropDownChange="@UpdateChart" Submite="@DateRange"></FilterComponent>
+                                </div>
+                            }
+                            <div class="row" style="margin-bottom:5px;margin-top:5px">
+                                <div style="margin-left:20px">
+                                    <Syncfusion.Blazor.Buttons.SfCheckBox Label="Show Label" LabelPosition="Syncfusion.Blazor.Buttons.LabelPosition.After" @bind-Checked="@IsLableShow"></Syncfusion.Blazor.Buttons.SfCheckBox>
+                                    <Syncfusion.Blazor.Buttons.SfButton OnClick="@Click" IconCss="e-icons e-export-icon" CssClass="e-flat e-small"></Syncfusion.Blazor.Buttons.SfButton>
+                                    <Syncfusion.Blazor.Buttons.SfButton OnClick="@ClickPrint" IconCss="e-icons e-print-icon" CssClass="e-flat e-small"></Syncfusion.Blazor.Buttons.SfButton>
+                                    <Syncfusion.Blazor.Buttons.SfButton OnClick="()=>RefreshChartData()" IconCss="e-icons e-refresh-icon" CssClass="e-flat e-small"></Syncfusion.Blazor.Buttons.SfButton>
+                                    @if (IsPopUpOpen == 1)
+                                    {
+                                        <Syncfusion.Blazor.Buttons.SfButton OnClick="@(() => OnClick(ChartSource))" IconCss="e-icons e_expand-icon" CssClass="e-flat e-small"></Syncfusion.Blazor.Buttons.SfButton>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </li>
+            </ul>
+        </div>
+        <div class="card-body">
+            <SfChart AllowExport="true" @ref="@ChartObj"   Height="@Height" Width="@Width" Title="@ChartSource.Title">
+                <ChartPrimaryXAxis Title="@ChartSource.XAxixDisplayName" ValueType="Syncfusion.Blazor.Charts.ValueType.Category" LabelIntersectAction="LabelIntersectAction.Rotate45"></ChartPrimaryXAxis>
+                <ChartPrimaryYAxis LabelFormat="@ChartSource.FormateString" Title="@ChartSource.YAxixDisplayName" ValueType="Syncfusion.Blazor.Charts.ValueType.Double"></ChartPrimaryYAxis>
+                <ChartSeriesCollection>
+                    <ChartSeries DataSource="@updateedDataSource" Low="0.00" Fill="Green" XName="XData" YName="YData1" Type="ChartSeriesType.Bar" Name="@ChartSource.Label1">
+                        <ChartMarker>
+                            <ChartDataLabel Visible="@IsLableShow" EnableRotation="true" LabelIntersectAction="true" Position="Syncfusion.Blazor.Charts.LabelPosition.Top">
+                                @*<ChartDataLabelFont FontWeight="600" Color="#ffffff"></ChartDataLabelFont>*@
+                            </ChartDataLabel>
+                        </ChartMarker>
+                    </ChartSeries>
+
+                    @if (ChartSource.Label2 != null)
+                    {
+                        <ChartSeries DataSource="@updateedDataSource" XName="XData" Fill="Blue" YName="YData2" Type="ChartSeriesType.Bar" Name="@ChartSource.Label2">
+                            <ChartMarker>
+                                <ChartDataLabel Visible="@IsLableShow" LabelIntersectAction="true" Position="Syncfusion.Blazor.Charts.LabelPosition.Top">
+                                    @*<ChartDataLabelFont FontWeight="600" Color="#ffffff"></ChartDataLabelFont>*@
+                                </ChartDataLabel>
+                            </ChartMarker>
+                        </ChartSeries>
+                    }
+                    @if (ChartSource.Label3 != null)
+                    {
+                        <ChartSeries DataSource="@updateedDataSource" XName="XData" Fill="Red" YName="YData3" Type="ChartSeriesType.Bar" Name="@ChartSource.Label2">
+                            <ChartMarker>
+                                <ChartDataLabel Visible="@IsLableShow" LabelIntersectAction="true" Position="Syncfusion.Blazor.Charts.LabelPosition.Top">
+                                    @*<ChartDataLabelFont FontWeight="600" Color="#ffffff"></ChartDataLabelFont>*@
+                                </ChartDataLabel>
+                            </ChartMarker>
+                        </ChartSeries>
+                    }
+                    @if (ChartSource.Label4 != null)
+                    {
+                        <ChartSeries DataSource="@updateedDataSource" XName="XData" Fill="Blue" YName="YData4" Type="ChartSeriesType.Bar" Name="@ChartSource.Label2">
+                            <ChartMarker>
+                                <ChartDataLabel Visible="@IsLableShow" LabelIntersectAction="true" Position="Syncfusion.Blazor.Charts.LabelPosition.Top">
+                                    @*<ChartDataLabelFont FontWeight="600" Color="#ffffff"></ChartDataLabelFont>*@
+                                </ChartDataLabel>
+                            </ChartMarker>
+                        </ChartSeries>
+                    }
+                    @if (ChartSource.Label5 != null)
+                    {
+                        <ChartSeries DataSource="@updateedDataSource" XName="XData" Fill="Blue" YName="YData5" Type="ChartSeriesType.Bar" Name="@ChartSource.Label2">
+                            <ChartMarker>
+                                <ChartDataLabel Visible="@IsLableShow" LabelIntersectAction="true" Position="Syncfusion.Blazor.Charts.LabelPosition.Top">
+                                    @*<ChartDataLabelFont FontWeight="600" Color="#ffffff"></ChartDataLabelFont>*@
+                                </ChartDataLabel>
+                            </ChartMarker>
+                        </ChartSeries>
+                    }
+
+                    <ChartTooltipSettings Enable="true"></ChartTooltipSettings>
+                </ChartSeriesCollection>
+                <ChartLegendSettings Visible="true" Position="Syncfusion.Blazor.Charts.LegendPosition.Bottom"></ChartLegendSettings>
+            </SfChart>
+        </div>
+    </div>
+}
+else if (ChartSource.ChartType == "Pie")
+{
+    <div class="card" style="box-shadow: 5px 10px 18px #888888; border-radius: 20px;height:100%">
+        <div>
+            <ul class="ulMenu">
+                <li id="Menu_Container">
+                    <div id="Menu_Button" @onclick="@(()=>OnOptionalMenuHide())" style="cursor: pointer">
+                        <span><i style="font-size:20px" class="fa">&#xf141;</i> </span>
+                    </div>
+
+                    <!--THE Menu DROPDOWN BOX.-->
+                    <div id="PopMenu" style="display: @IsOptionMenuHide;">
+                        <div>
+                            @if (ChartSource.IsFilterOn == 1)
+                            {
+
+                                <div class="row" style="padding:5px 15px 0 15px;">
+                                    <FilterComponent ChartSource="@ChartSource" DropDownChange="@UpdateChart" Submite="@DateRange"></FilterComponent>
+                                </div>
+                            }
+                            <div class="row" style="margin-bottom:5px;margin-top:5px">
+                                <div style="margin-left:20px">
+                                    <Syncfusion.Blazor.Buttons.SfCheckBox Label="Show Label" LabelPosition="Syncfusion.Blazor.Buttons.LabelPosition.After" @bind-Checked="@IsLableShow"></Syncfusion.Blazor.Buttons.SfCheckBox>
+                                    <Syncfusion.Blazor.Buttons.SfButton OnClick="@Click" IconCss="e-icons e-export-icon" CssClass="e-flat e-small"></Syncfusion.Blazor.Buttons.SfButton>
+                                    <Syncfusion.Blazor.Buttons.SfButton OnClick="@ClickPrint" IconCss="e-icons e-print-icon" CssClass="e-flat e-small"></Syncfusion.Blazor.Buttons.SfButton>
+                                    <Syncfusion.Blazor.Buttons.SfButton OnClick="()=>RefreshChartData()" IconCss="e-icons e-refresh-icon" CssClass="e-flat e-small"></Syncfusion.Blazor.Buttons.SfButton>
+                                    @if (IsPopUpOpen == 1)
+                                    {
+                                        <Syncfusion.Blazor.Buttons.SfButton OnClick="@(() => OnClick(ChartSource))" IconCss="e-icons e_expand-icon" CssClass="e-flat e-small"></Syncfusion.Blazor.Buttons.SfButton>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </li>
+            </ul>
+        </div>
+        <div class="card-body">
+            <SfAccumulationChart AllowExport="true" @ref="@AChartObj" EnableExport="true"  Height="@Height" Width="@Width" Title="@ChartSource.Title">
+                <AccumulationChartTooltipSettings Enable="true"></AccumulationChartTooltipSettings>
+                <AccumulationChartLegendSettings Visible="true" Position="Syncfusion.Blazor.Charts.LegendPosition.Bottom"></AccumulationChartLegendSettings>
+                <AccumulationChartSeriesCollection>
+                    <AccumulationChartSeries DataSource="@updateedDataSource" XName="XData" YName="YData1" Name="@ChartSource.Label1"
+                                             InnerRadius="0%" Explode="true">
+                        <AccumulationDataLabelSettings Visible="true" Name="@ChartSource.Label1" Position="AccumulationLabelPosition.Outside"></AccumulationDataLabelSettings>
+                    </AccumulationChartSeries>
+                </AccumulationChartSeriesCollection>
+            </SfAccumulationChart>
+
+        </div>
+    </div>
+}
+else if (ChartSource.ChartType == "Donut")
+{
+    <div class="card" style="box-shadow: 5px 10px 18px #888888; border-radius: 20px;height:100%">
+        <div>
+            <ul class="ulMenu">
+                <li id="Menu_Container">
+                    <div id="Menu_Button" @onclick="@(()=>OnOptionalMenuHide())" style="cursor: pointer">
+                        <span><i style="font-size:20px" class="fa">&#xf141;</i> </span>
+                    </div>
+
+                    <!--THE Menu DROPDOWN BOX.-->
+                    <div id="PopMenu" style="display: @IsOptionMenuHide;">
+                        <div>
+                            @if (ChartSource.IsFilterOn == 1)
+                            {
+
+                                <div class="row" style="padding:5px 15px 0 15px;">
+                                    <FilterComponent ChartSource="@ChartSource" DropDownChange="@UpdateChart" Submite="@DateRange"></FilterComponent>
+                                </div>
+                            }
+                            <div class="row" style="margin-bottom:5px;margin-top:5px">
+                                <div style="margin-left:20px">
+                                    <Syncfusion.Blazor.Buttons.SfCheckBox Label="Show Label" LabelPosition="Syncfusion.Blazor.Buttons.LabelPosition.After" @bind-Checked="@IsLableShow"></Syncfusion.Blazor.Buttons.SfCheckBox>
+                                    <Syncfusion.Blazor.Buttons.SfButton OnClick="@Click" IconCss="e-icons e-export-icon" CssClass="e-flat e-small"></Syncfusion.Blazor.Buttons.SfButton>
+                                    <Syncfusion.Blazor.Buttons.SfButton OnClick="@ClickPrint" IconCss="e-icons e-print-icon" CssClass="e-flat e-small"></Syncfusion.Blazor.Buttons.SfButton>
+                                    <Syncfusion.Blazor.Buttons.SfButton OnClick="()=>RefreshChartData()" IconCss="e-icons e-refresh-icon" CssClass="e-flat e-small"></Syncfusion.Blazor.Buttons.SfButton>
+                                    @if (IsPopUpOpen == 1)
+                                    {
+                                        <Syncfusion.Blazor.Buttons.SfButton OnClick="@(() => OnClick(ChartSource))" IconCss="e-icons e_expand-icon" CssClass="e-flat e-small"></Syncfusion.Blazor.Buttons.SfButton>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </li>
+            </ul>
+        </div>
+        <div class="card-body">
+            <SfAccumulationChart AllowExport="true" @ref="@AChartObj" EnableExport="true"  Height="@Height" Width="@Width" Title="@ChartSource.Title">
+                <AccumulationChartTooltipSettings Enable="true"></AccumulationChartTooltipSettings>
+                <AccumulationChartLegendSettings Visible="true" Position="Syncfusion.Blazor.Charts.LegendPosition.Bottom"></AccumulationChartLegendSettings>
+                <AccumulationChartSeriesCollection>
+                    <AccumulationChartSeries DataSource="@updateedDataSource" XName="XData" YName="YData1" Name="@ChartSource.Label1"
+                                             InnerRadius="40%" Explode="true">
+                        <AccumulationDataLabelSettings Visible="true" Name="@ChartSource.Label1" EnableRotation="true" Position="AccumulationLabelPosition.Outside"></AccumulationDataLabelSettings>
+                    </AccumulationChartSeries>
+                </AccumulationChartSeriesCollection>
+            </SfAccumulationChart>
+        </div>
+    </div>
+}
+else if (ChartSource.ChartType == "Data")
+{
+    <div class="card" style="box-shadow: 5px 10px 18px #888888; border-radius: 20px;height:100%;">
+        <div class="card-header">
+            <div style="font-weight:bold;text-align:center">@ChartSource.Title</div>
+        </div>
+        <div class="card-body">
+            <div class="d-table w-100 h-100 overflow-x:auto;">
+                <div class="d-table-row text-center align-self-center">
+                    @foreach (DataColumn col in ChartSource.ColumnDataTable.Columns)
+                    {
+                        <div class="d-table-cell border-bottom p-1">
+                            @col.ColumnName
+                        </div>
+                    }
+                </div>
+                @{
+                    //To make unique Id
+                    foreach (var ChartSources in ChartSource.TableData)
+                    {
+                        <div class="d-table-row text-center align-self-center">
+                            @foreach (KeyValuePair<string, object> itm in ChartSources)
+                            {
+                                <div class="d-table-cell border-bottom p-1">@ChartSources.Where(a => a.Key == itm.Key).Select(b => b.Value).FirstOrDefault()</div>
+                            }
+                        </div>
+                    }
+                }
+            </div>
+        </div>
+    </div>
+}
+else if (ChartSource.ChartType == "CardData")
+{
+    string Colour = ChartSource.CardBgColor == "white" ? "black" : "white";
+    <div class="middle-box1" style="height: @ChartSource.Height;width:@ChartSource.Width;font-weight: bold; color:@Colour ;box-shadow: 5px 10px 18px #888888; border-radius: 20px; background-color: @ChartSource.CardBgColor;font-size:12px">
+        <b><span>@ChartSource.Title</span></b><br />
+        <b><span>@ChartSource.YAxixValueColumnName1</span></b>
+    </div>
+    @*</div>*@
+}
+
+
+@code {
+
+    [Inject]
+    public IDynamicAPIService dynamicAPIService { get; set; }
+    List<DataClass> updateedDataSource = new List<DataClass>();
+    //IEnumerable<ChartSeriesType> ChartSeriesTypes = Enum.GetValues(typeof(ChartSeriesType)).Cast<ChartSeriesType>();
+    //ChartSeriesType ChartSeriesTyp;
+
+    [Parameter]
+    public GetRequestConfiguration ChartSource { get; set; }
+    [Parameter]
+    public EventCallback<GetRequestConfiguration> PopUpClick { get; set; }
+    public bool _popUp { get; set; }
+    [Parameter]
+    public string Height { get; set; }
+    [Parameter]
+    public string Width { get; set; }
+    [Parameter]
+    public int IsPopUpOpen { get; set; }
+    static bool Istooltip = true;
+    string IsOptionMenuHide = "none";
+    static bool IsMenuOpen = false;
+    string tooltip = Istooltip == true ? "block" : "none";
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            updateedDataSource = ChartSource.ChartData;
+            //ChartSeriesTyp = ((ChartSeriesType)ChartSource.CommanSeries);
+            //LegendPropertiesSet
+
+            bool _AllowToggleSeries = Convert.ToBoolean(ChartSource.LegendAllowToggleSeries);
+            bool _Visible = Convert.ToBoolean(ChartSource.LegendVisible);
+        }
+        catch (Exception ex)
+        { var err = ex.Message; }
+
+    }
+
+    void UpdateChart(List<DataClass> arge)
+    {
+        updateedDataSource = arge;
+    }
+
+    void DateRange(List<DataClass> arge)
+    {
+        updateedDataSource = arge;
+    }
+
+    bool IsLableShow = true;
+
+    protected async Task RefreshChartData()
+    {
+        Param prm2 = new Param { IsSp = 0, QueryOrSp = ChartSource.QueryOrSp };
+        string strDdl = await dynamicAPIService.GetDatabyParam(StaticDataSource.MenuItem.ConnectionString, StaticDataSource.MenuItem.ProviderName, prm2);
+        var response = JsonConvert.DeserializeObject<OutputData>(strDdl);
+        var newresponse = new ObservableCollection<ExpandoObject>(response.DynamicData);
+        List<DataClass> chartDataList = new List<DataClass>();
+
+        foreach (var input in newresponse)
+        {
+            DataClass row = new DataClass();
+            foreach (KeyValuePair<string, object> itm in input)
+            {
+                // Create a new dynamic ExpandoObject
+                if (itm.Key.ToString() == ChartSource.XAxixValueColumnName)
+                    row.XData = itm.Value.ToString();
+                else if (itm.Key.ToString() == ChartSource.YAxixValueColumnName1)
+                    row.YData1 = (itm.Value == null) ? 0 : Convert.ToDouble((itm.Value.ToString()));
+                else if (itm.Key.ToString() == ChartSource.YAxixValueColumnName2)
+                    row.YData2 = (itm.Value == null) ? 0 : Convert.ToDouble((itm.Value.ToString()));
+                else if (itm.Key.ToString() == ChartSource.YAxixValueColumnName3)
+                    row.YData3 = (itm.Value == null) ? 0 : Convert.ToDouble((itm.Value.ToString()));
+                else if (itm.Key.ToString() == ChartSource.YAxixValueColumnName4)
+                    row.YData4 = (itm.Value == null) ? 0 : Convert.ToDouble((itm.Value.ToString()));
+                else if (itm.Key.ToString() == ChartSource.YAxixValueColumnName5)
+                    row.YData5 = (itm.Value == null) ? 0 : Convert.ToDouble((itm.Value.ToString()));
+                if (ChartSource.ChartType == "Scatter" || ChartSource.ChartType == "Common" || ChartSource.ChartType == "Bubble" || ChartSource.ChartType == "MultiAxis")
+                {
+                    if (itm.Key.ToString() == ChartSource.GroupKey)
+                        row.GropKey = itm.Value.ToString();
+                }
+            }
+            chartDataList.Add(row);
+        }
+
+        ChartSource.ChartData = chartDataList;
+        updateedDataSource = chartDataList;
+        //StateHasChanged();
+    }
+
+    SfChart ChartObj;
+    SfAccumulationChart AChartObj;
+    private void Click()
+    {
+        ChartObj.Export(ExportType.JPEG, ChartSource.Title);
+    }
+    private void ClickPrint()
+    {
+        ChartObj.Print();
+    }
+
+    private void AClick()
+    {
+        AChartObj.Export(ExportType.PNG, ChartSource.Title);
+    }
+    private void AClickPrint()
+    {
+        AChartObj.Print();
+    }
+
+    void OnClick(GetRequestConfiguration args)
+    {
+        //PopUpClick.InvokeAsync(args);
+        dialogService.Open<DashBoardrazor>("", new Dictionary<string, object>() { { "ChartSource", args }, { "Height", "100%" }, { "Width", "100%" }, { "IsPopUpOpen", 0 } }, new DialogOptions() { Width = "100%", Height = "100%" });
+    }
+
+    void OnOptionalMenuHide()
+    {
+        if (IsMenuOpen == false)
+        {
+            IsOptionMenuHide = "block";
+            IsMenuOpen = true;
+        }
+        else
+        {
+            IsOptionMenuHide = "none";
+            IsMenuOpen = false;
+        }
+    }
+}

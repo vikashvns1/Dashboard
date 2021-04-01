@@ -1,0 +1,423 @@
+﻿@using System.Data;
+@using System.Dynamic;
+@using CColor = System.Drawing.Color;
+@using System.Collections.Generic;
+@using System.Collections.ObjectModel;
+@using System.Linq;
+@using System.Threading.Tasks;
+@using Newtonsoft.Json;
+@using DashBoardModel;
+
+
+@if (ChartSource.ChartType == "Line")
+{
+    <RadzenCard>
+        <FilterComponent ChartSource="@ChartSource" DropDownChange="@UpdateChart" Submite="@DateRange"></FilterComponent>
+        <div style="font-weight:bold;text-align:center">@ChartSource.Title</div>
+        <RadzenChart ColorScheme=@ChartColorScheme(ChartSource.ColorScheme) @onclick="@((args) => OnClick(ChartSource))">
+            @*<RadzenLineSeries Data=@ChartSource.ChartData.Where(a=>Convert.ToDateTime(a.XData).Year.ToString()==((selectedItem=="All" ||string.IsNullOrEmpty(selectedItem)) ?Convert.ToDateTime(a.XData).Year.ToString():selectedItem)) Title="@ChartSource.Title1" CategoryProperty="XData" ValueProperty="YData1" LineType=@CovertStringToLineType(ChartSource.LineType1) RenderingOrder="1">*@
+            <RadzenLineSeries Data=@updateedDataSource Title="@ChartSource.Label1" CategoryProperty="XData" ValueProperty="YData1" LineType=@CovertStringToLineType(ChartSource.LineType1) RenderingOrder="1">
+
+                <RadzenMarkers MarkerType=@CovertStringToMarkerType(ChartSource.MarkerType1) />
+                <RadzenLegend Position=@ChartLegendPosition(ChartSource.LegendPosition)></RadzenLegend>
+            </RadzenLineSeries>
+            @if (ChartSource.Label2 != null)
+            {
+                <RadzenLineSeries Data=@ChartSource.ChartData Title="@ChartSource.Label2" CategoryProperty="XData" ValueProperty="YData2" LineType=@CovertStringToLineType(ChartSource.LineType2)>
+                    <RadzenMarkers MarkerType=@CovertStringToMarkerType(ChartSource.MarkerType2) />
+                </RadzenLineSeries>
+            }
+            @if (ChartSource.Label3 != null)
+            {
+                <RadzenLineSeries Data=@ChartSource.ChartData Title="@ChartSource.Label3" CategoryProperty="XData" ValueProperty="YData3" LineType=@CovertStringToLineType(ChartSource.LineType3)>
+                    <RadzenMarkers MarkerType=@CovertStringToMarkerType(ChartSource.MarkerType3) />
+                </RadzenLineSeries>
+            }
+            @if (ChartSource.Label4 != null)
+            {
+                <RadzenLineSeries  Data=@ChartSource.ChartData Title="@ChartSource.Label4" CategoryProperty="XData" ValueProperty="YData4" LineType=@CovertStringToLineType(ChartSource.LineType4)>
+                    <RadzenMarkers MarkerType=@CovertStringToMarkerType(ChartSource.MarkerType4) />                   
+                </RadzenLineSeries>
+            }
+            @if (ChartSource.Label5 != null)
+            {
+                <RadzenLineSeries Data=@ChartSource.ChartData Title="@ChartSource.Label5" CategoryProperty="XData" ValueProperty="YData5" LineType=@CovertStringToLineType(ChartSource.LineType5)>
+                    <RadzenMarkers MarkerType=@CovertStringToMarkerType(ChartSource.MarkerType5) />
+                </RadzenLineSeries>
+            }
+
+            @if (ChartSource.FormateString != null)
+            {
+                <RadzenCategoryAxis Padding="0" FormatString="{0:MM}">
+                    <RadzenGridLines Visible="true" />
+                    <RadzenAxisTitle Text="@ChartSource.XAxixDisplayName" />
+                </RadzenCategoryAxis>
+            }
+            else
+            {
+                <RadzenCategoryAxis  Padding="0">
+                    <RadzenGridLines Visible="true" />
+                    <RadzenAxisTitle Text="@ChartSource.XAxixDisplayName" />
+                </RadzenCategoryAxis>
+                      }
+            <RadzenValueAxis>
+                <RadzenGridLines Visible="true" />
+                <RadzenAxisTitle Text="@ChartSource.YAxixDisplayName" />
+            </RadzenValueAxis>
+        </RadzenChart>
+    </RadzenCard>
+}
+else if (ChartSource.ChartType == "Area")
+{<RadzenCard @onclick="@((args) => OnClick(ChartSource))">
+        <FilterComponent ChartSource="@ChartSource" DropDownChange="@UpdateChart" Submite="@DateRange"></FilterComponent>
+        <div style="font-weight:bold;text-align:center">@ChartSource.Title</div>
+        <RadzenChart ColorScheme=@ChartColorScheme(ChartSource.ColorScheme)>
+            <RadzenAreaSeries Data=@updateedDataSource Title="@ChartSource.Label1" CategoryProperty="XData" ValueProperty="YData1" LineType=@CovertStringToLineType(ChartSource.LineType1) RenderingOrder="1">
+                <RadzenLegend Position=@ChartLegendPosition(ChartSource.LegendPosition)></RadzenLegend>
+            </RadzenAreaSeries>
+            @if (ChartSource.Label2 != null)
+            {
+                <RadzenAreaSeries Data=@ChartSource.ChartData Title="@ChartSource.Label2" CategoryProperty="XData" ValueProperty="YData2" LineType=@CovertStringToLineType(ChartSource.LineType2)>
+                </RadzenAreaSeries>
+            }
+            @if (ChartSource.Label3 != null)
+            {
+                <RadzenAreaSeries Data=@ChartSource.ChartData Title="@ChartSource.Label3" CategoryProperty="XData" ValueProperty="YData3" LineType=@CovertStringToLineType(ChartSource.LineType3)>
+                </RadzenAreaSeries>
+            }
+            @if (ChartSource.Label4 != null)
+            {
+                <RadzenAreaSeries Data=@ChartSource.ChartData Title="@ChartSource.Label4" CategoryProperty="XData" ValueProperty="YData4" LineType=@CovertStringToLineType(ChartSource.LineType4)>
+                </RadzenAreaSeries>
+            }
+            @if (ChartSource.Label5 != null)
+            {
+                <RadzenAreaSeries Data=@ChartSource.ChartData Title="@ChartSource.Label5" CategoryProperty="XData" ValueProperty="YData5" LineType=@CovertStringToLineType(ChartSource.LineType5)>
+                </RadzenAreaSeries>
+            }
+            @if (ChartSource.FormateString != null)
+            {
+                <RadzenCategoryAxis Padding="0" FormatString="{0:MM}">
+                    <RadzenGridLines Visible="true" />
+                    <RadzenAxisTitle Text="@ChartSource.XAxixDisplayName" />
+                </RadzenCategoryAxis>
+            }
+            else
+            {
+                <RadzenCategoryAxis Padding="0">
+                    <RadzenGridLines Visible="true" />
+                    <RadzenAxisTitle Text="@ChartSource.XAxixDisplayName" />
+                </RadzenCategoryAxis>
+            }
+            <RadzenValueAxis>
+                <RadzenGridLines Visible="true" />
+                <RadzenAxisTitle Text="@ChartSource.YAxixDisplayName" />
+            </RadzenValueAxis>
+        </RadzenChart>
+    </RadzenCard>
+}
+else if (ChartSource.ChartType == "Column")
+{<RadzenCard @onclick="@((args) => OnClick(ChartSource))">
+        <FilterComponent ChartSource="@ChartSource" DropDownChange="@UpdateChart" Submite="@DateRange"></FilterComponent>
+        <div style="font-weight:bold;text-align:center">@ChartSource.Title</div>
+        <RadzenChart ColorScheme=@ChartColorScheme(ChartSource.ColorScheme)>
+            <RadzenColumnSeries Data=@updateedDataSource Title="@ChartSource.Label1" CategoryProperty="XData" ValueProperty="YData1" LineType=@CovertStringToLineType(ChartSource.LineType1)>
+                <RadzenLegend Position=@ChartLegendPosition(ChartSource.LegendPosition)></RadzenLegend>
+            </RadzenColumnSeries>
+            @if (ChartSource.Label2 != null)
+            {
+                <RadzenColumnSeries Data=@ChartSource.ChartData Title="@ChartSource.Label2" CategoryProperty="XData" ValueProperty="YData2" LineType=@CovertStringToLineType(ChartSource.LineType2)>
+                </RadzenColumnSeries>
+            }
+            @if (ChartSource.Label3 != null)
+            {
+                <RadzenColumnSeries Data=@ChartSource.ChartData Title="@ChartSource.Label3" CategoryProperty="XData" ValueProperty="YData3" LineType=@CovertStringToLineType(ChartSource.LineType3)>
+                </RadzenColumnSeries>
+            }
+            @if (ChartSource.Label4 != null)
+            {
+                <RadzenColumnSeries Data=@ChartSource.ChartData Title="@ChartSource.Label4" CategoryProperty="XData" ValueProperty="YData4" LineType=@CovertStringToLineType(ChartSource.LineType4)>
+                </RadzenColumnSeries>
+            }
+            @if (ChartSource.Label5 != null)
+            {
+                <RadzenColumnSeries Data=@ChartSource.ChartData Title="@ChartSource.Label5" CategoryProperty="XData" ValueProperty="YData5" LineType=@CovertStringToLineType(ChartSource.LineType5)>
+                </RadzenColumnSeries>
+            }
+
+            @if (ChartSource.FormateString != null)
+            {
+                <RadzenCategoryAxis Padding="0" FormatString="{0:MM}">
+                    <RadzenGridLines Visible="true" />
+                    <RadzenAxisTitle Text="@ChartSource.XAxixDisplayName" />
+                </RadzenCategoryAxis>
+            }
+            else
+            {
+                <RadzenCategoryAxis Padding="0" Min="0">
+                    <RadzenGridLines Visible="true" />
+                    <RadzenAxisTitle Text="@ChartSource.XAxixDisplayName" />
+                </RadzenCategoryAxis>
+            }
+            <RadzenValueAxis>
+                <RadzenGridLines Visible="true" />
+                <RadzenAxisTitle Text="@ChartSource.YAxixDisplayName" />
+
+            </RadzenValueAxis>
+            <RadzenColumnOptions Radius="5" Margin="0" />
+        </RadzenChart>
+    </RadzenCard>
+}
+else if (ChartSource.ChartType == "Bar")
+{<RadzenCard @onclick="@((args) => OnClick(ChartSource))">
+        <FilterComponent ChartSource="@ChartSource" DropDownChange="@UpdateChart" Submite="@DateRange"></FilterComponent>
+
+        <div style="font-weight:bold;text-align:center">@ChartSource.Title</div>
+
+        <RadzenChart ColorScheme=@ChartColorScheme(ChartSource.ColorScheme)>
+            <RadzenBarSeries Data=@updateedDataSource Title="@ChartSource.Label1" CategoryProperty="XData" ValueProperty="YData1" LineType=@CovertStringToLineType(ChartSource.LineType1)>
+                <RadzenLegend Position=@ChartLegendPosition(ChartSource.LegendPosition)></RadzenLegend>
+            </RadzenBarSeries>
+            @if (ChartSource.Label2 != null)
+            {
+                <RadzenBarSeries Data=@ChartSource.ChartData Title="@ChartSource.Label2" CategoryProperty="XData" ValueProperty="YData2" LineType=@CovertStringToLineType(ChartSource.LineType2)>
+                </RadzenBarSeries>
+            }
+            @if (ChartSource.Label3 != null)
+            {
+                <RadzenBarSeries Data=@ChartSource.ChartData Title="@ChartSource.Label3" CategoryProperty="XData" ValueProperty="YData3" LineType=@CovertStringToLineType(ChartSource.LineType3)>
+                </RadzenBarSeries>
+            }
+            @if (ChartSource.Label4 != null)
+            {
+                <RadzenBarSeries Data=@ChartSource.ChartData Title="@ChartSource.Label4" CategoryProperty="XData" ValueProperty="YData4" LineType=@CovertStringToLineType(ChartSource.LineType4)>
+                </RadzenBarSeries>
+            }
+            @if (ChartSource.Label5 != null)
+            {
+                <RadzenBarSeries Data=@ChartSource.ChartData Title="@ChartSource.Label5" CategoryProperty="XData" ValueProperty="YData5" LineType=@CovertStringToLineType(ChartSource.LineType5)>
+                </RadzenBarSeries>
+            }
+
+            @if (ChartSource.FormateString != null)
+            {
+                <RadzenCategoryAxis Padding="0" FormatString="{0:MM}">
+                    <RadzenGridLines Visible="true" />
+                    <RadzenAxisTitle Text="@ChartSource.XAxixDisplayName" />
+                </RadzenCategoryAxis>
+            }
+            else
+            {
+                <RadzenCategoryAxis Padding="0">
+                    <RadzenGridLines Visible="true" />
+                    <RadzenAxisTitle Text="@ChartSource.XAxixDisplayName" />
+                </RadzenCategoryAxis>
+            }
+            <RadzenValueAxis>
+                <RadzenGridLines Visible="true" />
+                <RadzenAxisTitle Text="@ChartSource.YAxixDisplayName" />
+            </RadzenValueAxis>
+            <RadzenBarOptions Radius="5" Margin="0" />
+
+        </RadzenChart>
+    </RadzenCard>
+}
+else if (ChartSource.ChartType == "Pie")
+{
+    <RadzenCard>
+        <FilterComponent ChartSource="@ChartSource" DropDownChange="@UpdateChart" Submite="@DateRange"></FilterComponent>
+
+        <div style="font-weight:bold;text-align:center">@ChartSource.Title</div>
+
+        <RadzenChart ColorScheme=@ChartColorScheme(ChartSource.ColorScheme)>
+            <RadzenPieSeries Data=@updateedDataSource Title="@ChartSource.Label1" CategoryProperty="XData" ValueProperty="YData1" />
+            <RadzenLegend Position=@ChartLegendPosition(ChartSource.LegendPosition)></RadzenLegend>
+
+        </RadzenChart>
+    </RadzenCard>
+}
+else if (ChartSource.ChartType == "Donut")
+{
+    <RadzenCard @onclick="@((args) => OnClick(ChartSource))">
+        <FilterComponent ChartSource="@ChartSource" DropDownChange="@UpdateChart" Submite="@DateRange"></FilterComponent>
+        <div style="font-weight:bold;text-align:center">@ChartSource.Title</div>
+
+        <RadzenChart ColorScheme=@ChartColorScheme(ChartSource.ColorScheme)>
+            <RadzenDonutSeries Data=@updateedDataSource Title="@ChartSource.Label1" CategoryProperty="XData" ValueProperty="YData1">
+                <TitleTemplate>
+                    <div class="rz-donut-content">
+                        <div>@ChartSource.Label1</div>
+
+                    </div>
+                    <RadzenLegend Position=@ChartLegendPosition(ChartSource.LegendPosition)></RadzenLegend>
+
+                </TitleTemplate>
+
+            </RadzenDonutSeries>
+
+        </RadzenChart>
+    </RadzenCard>
+}
+else if (ChartSource.ChartType == "Data")
+{
+    <table border="1" cellpadding="10" cellspacing="5" width="100%" class="middle-box1" @onclick="@((args) => OnClick(ChartSource))">
+        <tr>
+            <th style="font-weight:bold;text-align:center;" colspan="@ChartSource.ColumnDataTable.Columns.Count">
+                @ChartSource.Title
+            </th>
+        </tr>
+        <tr>
+            @foreach (DataColumn col in ChartSource.ColumnDataTable.Columns)
+            {
+                <th>
+                    @col.ColumnName
+                </th>
+            }
+        </tr>
+        @{
+            //To make unique Id
+            foreach (var ChartSources in ChartSource.TableData)
+            {
+                <tr>
+                    @foreach (KeyValuePair<string, object> itm in ChartSources)
+                    {
+                        <td>@ChartSources.Where(a => a.Key == itm.Key).Select(b => b.Value).FirstOrDefault()</td>
+                    }
+                </tr>
+            }
+        }
+    </table>
+}
+else if (ChartSource.ChartType == "CardData")
+{
+    string Colour = "align-items:center;font-weight:bold;color:white;background-color:" + ChartSource.CardBgColor;
+    <RadzenCard @bind-style="Colour">
+        <span>@ChartSource.Title</span>
+        <span>@ChartSource.YAxixValueColumnName1</span>
+    </RadzenCard>
+}
+
+
+@code {
+    string Width = string.Empty;
+    List<DataClass> updateedDataSource = new List<DataClass>();
+
+    [Parameter]
+    public GetRequestConfiguration ChartSource { get; set; }
+    [Parameter]
+    public EventCallback<GetRequestConfiguration> Click { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        updateedDataSource = ChartSource.ChartData;
+    }
+
+    void OnClick(GetRequestConfiguration args)
+    {
+        Click.InvokeAsync(args);
+    }
+
+    void UpdateChart(List<DataClass> arge)
+    {
+        updateedDataSource = arge;
+    }
+
+    void DateRange(List<DataClass> arge)
+    {
+        updateedDataSource = arge;
+    }
+
+    public LineType CovertStringToLineType(string _LineType)
+    {
+        LineType LT = new LineType();
+        switch (_LineType)
+        {
+            case "Dashed":
+                LT = LineType.Dashed;
+                break;
+            case "Dotted":
+                LT = LineType.Dotted;
+                break;
+            case "Solid":
+                LT = LineType.Solid;
+                break;
+        }
+        return LT;
+    }
+
+    public MarkerType CovertStringToMarkerType(string _MarkerType)
+    {
+        MarkerType MT = new MarkerType();
+        switch (_MarkerType)
+        {
+            case "Circle":
+                MT = MarkerType.Circle;
+                break;
+            case "Diamond":
+                MT = MarkerType.Diamond;
+                break;
+            case "Square":
+                MT = MarkerType.Square;
+                break;
+            case "Triangle":
+                MT = MarkerType.Triangle;
+                break;
+            case "Auto":
+                MT = MarkerType.Auto;
+                break;
+            case "None":
+                MT = MarkerType.None;
+                break;
+        }
+        return MT;
+    }
+
+    public ColorScheme ChartColorScheme(string _ColorScheme)
+    {
+        ColorScheme CS = new ColorScheme();
+        switch (_ColorScheme)
+        {
+            case "Divergent":
+                CS = ColorScheme.Divergent;
+                break;
+            case "Monochrome":
+                CS = ColorScheme.Monochrome;
+                break;
+            case "Palette":
+                CS = ColorScheme.Palette;
+                break;
+            case "Pastel":
+                CS = ColorScheme.Pastel;
+                break;
+            default:
+                CS = ColorScheme.Palette;
+                break;
+        }
+        return CS;
+    }
+
+    public LegendPosition ChartLegendPosition(string _LegendPosition)
+    {
+        LegendPosition LP = new LegendPosition();
+        switch (_LegendPosition)
+        {
+            case "Bottom":
+                LP = LegendPosition.Bottom;
+                break;
+            case "Left":
+                LP = LegendPosition.Left;
+                break;
+            case "Right":
+                LP = LegendPosition.Right;
+                break;
+            case "Top":
+                LP = LegendPosition.Top;
+                break;
+            default:
+                LP = LegendPosition.Right;
+                break;
+        }
+        return LP;
+    }
+
+}

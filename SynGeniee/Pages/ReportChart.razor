@@ -1,0 +1,266 @@
+﻿@page "/ReportChart"
+@using System.Collections.Generic;
+@using System.Collections.ObjectModel;
+@using System.Data;
+@using System.Dynamic;
+@using DashBoardModel;
+@using Newtonsoft.Json;
+@inject NavigationManager NavigationManager
+@using Syncfusion.Blazor.Grids
+@using Syncfusion.Blazor.Data
+@using System.Threading.Tasks
+@inject Radzen.DialogService dialogService
+
+@if (StaticDataSource.chartAttributesList.OrderBy(a => a.ChartOrder).Where(a => a.ChartType == "Report" && a.Id == StaticDataSource.MenuItem.ComponentId).FirstOrDefault().TableData == null)
+{
+<p><em>Loading...</em></p> }
+else
+{
+chartdetails = StaticDataSource.chartAttributesList.OrderBy(a => a.ChartOrder).Where(a => a.ChartType == "Report" && a.Id == StaticDataSource.MenuItem.ComponentId).FirstOrDefault();
+int count = chartdetails.ColumnDataTable.Rows.Count;
+RowCount = count.ToString();
+<div class="card" style="height:50%">
+    <div class="card-header">
+        <div style="font-weight:bold;text-align:center">@chartdetails.Title</div>
+    </div>
+    <div class="card-subtitle">
+        <div style="font-weight:bold;text-align:center;margin-top:8px">
+            @chartdetails.GroupKey   @itemCode
+        </div>
+    </div>
+    <div class="card-body">
+        <SfChart AllowExport="true"  Theme="Syncfusion.Blazor.Charts.ChartTheme.BootstrapDark" Height="50%">
+            <ChartPrimaryXAxis Title="@chartdetails.XAxixDisplayName" ValueType="Syncfusion.Blazor.Charts.ValueType.Category" LabelIntersectAction="LabelIntersectAction.Rotate45"></ChartPrimaryXAxis>
+            <ChartPrimaryYAxis LabelFormat="INR {value}M" Title="@chartdetails.YAxixDisplayName" ValueType="Syncfusion.Blazor.Charts.ValueType.Double"></ChartPrimaryYAxis>
+            <ChartZoomSettings EnableMouseWheelZooming="false" EnablePinchZooming="true" EnableSelectionZooming="true"></ChartZoomSettings>
+            <ChartSeriesCollection>
+                <ChartSeries DataSource="@updateedDataSource" Low="0.00" Fill="Red" XName="XData" YName="YData1" Type="ChartSeriesType.Line" Name="@chartdetails.Label1">
+                    <ChartMarker>
+                        <ChartDataLabel Visible="true" EnableRotation="true" LabelIntersectAction="true" Position="Syncfusion.Blazor.Charts.LabelPosition.Top">
+                            <ChartDataLabelFont FontWeight="600" Color="#ffffff"></ChartDataLabelFont>
+                        </ChartDataLabel>
+                    </ChartMarker>
+                </ChartSeries>
+                <ChartTooltipSettings Enable="true"></ChartTooltipSettings>
+            </ChartSeriesCollection>
+            <ChartLegendSettings Visible="true" Position="Syncfusion.Blazor.Charts.LegendPosition.Bottom"></ChartLegendSettings>
+        </SfChart>
+    </div>
+</div>
+                <div class="card">
+                    <div class="card-body">
+                        <SfGrid Height="@Height" Width="100%" DataSource="@StaticDataSource.chartAttributesList.OrderBy(a => a.ChartOrder).Where(a => a.ChartType == "Report" && a.Id == StaticDataSource.MenuItem.ComponentId).FirstOrDefault().TableData" GridLines="@GridLine.Both" @ref="DefaultGrid"
+                                TValue="ExpandoObject" Toolbar="@Toolbaritems" AllowFiltering="true"
+                                AllowSelection="true" SelectedRowIndex="0" AllowGrouping="true" AllowMultiSorting="true" AllowSorting="true" ShowColumnChooser="true" AllowReordering="true" AllowTextWrap="true" AllowResizing="true" AllowPdfExport="true" AllowExcelExport="true">
+                            <GridFilterSettings Type="Syncfusion.Blazor.Grids.FilterType.Menu"></GridFilterSettings>
+                            <GridSelectionSettings Type="SelectionType.Single"></GridSelectionSettings>
+                            <GridEvents OnToolbarClick="ToolbarClickHandler" RowSelected="GetSelectedRecord" DataBound="OnDataBound" TValue="ExpandoObject"></GridEvents>
+                            <GridColumns>
+                                @foreach (DataColumn col in StaticDataSource.chartAttributesList.OrderBy(a => a.ChartOrder).Where(a => a.ChartType == "Report" && a.Id == StaticDataSource.MenuItem.ComponentId).FirstOrDefault().ColumnDataTable.Columns)
+                                {
+                                    switch (col.DataType.FullName)
+                                    {
+                                        case "System.Int32":
+        <GridColumn Field="@col.ToString()" Type="ColumnType.Number" HeaderTextAlign="@Syncfusion.Blazor.Grids.TextAlign.Center" TextAlign="Syncfusion.Blazor.Grids.TextAlign.Right"></GridColumn> break;
+    case "System.DateTime":
+<GridColumn Field="@col.ToString()" Type="ColumnType.Date" Format="MM/dd/yyyy" HeaderTextAlign="Syncfusion.Blazor.Grids.TextAlign.Center" /> break;
+case "System.String":
+<GridColumn Field="@col.ToString()" Type="ColumnType.String" HeaderTextAlign="Syncfusion.Blazor.Grids.TextAlign.Center" /> break;
+default:
+<GridColumn Field="@col.ToString()" Type="ColumnType.String" HeaderTextAlign="Syncfusion.Blazor.Grids.TextAlign.Center" />break;
+}
+}
+                            </GridColumns>
+                        </SfGrid>
+                    </div>
+                </div>}
+@code
+{ [Inject]
+    public IDynamicAPIService dynamicAPIService { get; set; }
+    string RowCount;
+    ExpandoObject selectedProduct;
+    public string Height = (StaticDataSource.WindowsHeight / 4) + "px";
+
+    private bool shouldRender;
+
+    public ExpandoObject SelectedProduct
+    {
+        get { return selectedProduct; }
+        set
+        {
+            selectedProduct = value;
+            InvokeAsync(StateHasChanged);
+        }
+    }
+
+    string itemCode;
+    public string ItemCode
+    {
+        get { return itemCode; }
+        set
+        {
+            itemCode = value;
+            InvokeAsync(StateHasChanged);
+        }
+    }
+
+    SfGrid<ExpandoObject> DefaultGrid;
+    //List<ExpandoObject> _data = StaticDataSource.chartAttributesList.OrderBy(a => a.ChartOrder).Where(a => a.ChartType == "Report" && a.Id == StaticDataSource.MenuItem.ComponentId).FirstOrDefault().TableData;
+    private List<Object> Toolbaritems = new List<Object>();
+    public GetRequestConfiguration chartdetails { get; set; }
+    List<DataClass> updateedDataSource = new List<DataClass>();
+    protected override async Task OnInitializedAsync()
+    {
+        RowCount = StaticDataSource.chartAttributesList.OrderBy(a => a.ChartOrder).Where(a => a.ChartType == "Report" && a.Id == StaticDataSource.MenuItem.ComponentId).FirstOrDefault().ColumnDataTable.Rows.Count.ToString();
+
+        chartdetails = StaticDataSource.chartAttributesList.OrderBy(a => a.ChartOrder).Where(a => a.ChartType == "Report" && a.Id == StaticDataSource.MenuItem.ComponentId).FirstOrDefault();
+        //StaticDataSource.MailSendData = chartdetails.ColumnDataTable;
+        Toolbaritems = new List<Object>() { "Total Rows : " + RowCount, "Print", "ExcelExport", "PdfExport", "ColumnChooser", "Search", new ItemModel() { Text = "Send Mail", TooltipText = "Send Mail", CssClass = "e-flat e-small", Type = ItemType.Button, Id = "Click" } };
+
+        SelectedProduct = chartdetails.TableData.FirstOrDefault();
+        ExpandoObject ex = new ExpandoObject();
+        ex = (ExpandoObject)(SelectedProduct);
+        Param param = new Param();
+        param = chartdetails.Filter.FirstOrDefault();
+        ItemCode = ex.First(a => a.Key == chartdetails.GroupKey.Trim()).Value.ToString();
+        //string qry = "select p3.itemid, p2.podate, p3.rate from purorder p2 join purorderitem p3 on (p2.po_id = p3.po_id and p2.siteid = 0 and p3.siteid = 0) left join itemmaster i on(p3.itemid = i.itemid) where p3.itemid =@id::int4";
+
+        var _param = new Param { IsSp = param.IsSp, QueryOrSp = param.QueryOrSp, Label = param.Label, Value = ItemCode };
+
+        string jsonChartstring = await dynamicAPIService.GetDatabyParam(StaticDataSource.MenuItem.ConnectionString, StaticDataSource.MenuItem.ProviderName, _param);
+        var response = JsonConvert.DeserializeObject<OutputData>(jsonChartstring);
+
+        if (response.DynamicData != null)
+        {
+            StaticDataSource.ChartDataObj = new ObservableCollection<ExpandoObject>(response.DynamicData);
+            List<DataClass> chartDataList = new List<DataClass>();
+            foreach (var inputAttribute in StaticDataSource.ChartDataObj)
+            {
+                DataClass row = new DataClass();
+                foreach (KeyValuePair<string, object> itm in inputAttribute)
+                {
+                    // Create a new dynamic ExpandoObject
+                    if (itm.Key.ToString() == "podate")
+                        row.XData = itm.Value.ToString();
+                    else if (itm.Key.ToString() == "rate")
+                        row.YData1 = (itm.Value == null) ? 0 : Convert.ToDouble((itm.Value.ToString()));
+                }
+                // Add the object to the dynamic output list
+                chartDataList.Add(row);
+            }
+            //value.ControlData = chartDataList;
+            updateedDataSource = chartDataList;
+            StateHasChanged();
+        }
+    }
+
+    public void OnDataBound(object args)
+    {
+        //await InvokeAsync(() =>
+        //{
+        this.RowCount = this.DefaultGrid.CurrentViewData.Count().ToString();//.SelectRows(SelectedNodeIndex);
+        base.StateHasChanged();
+        //});
+    }
+
+    async void OnRowClick(ExpandoObject ex)
+    {
+        //ExpandoObject ex = new ExpandoObject();
+        //ex = (ExpandoObject)(SelectedProduct);
+        Param param = new Param();
+        param = chartdetails.Filter.FirstOrDefault();
+        ItemCode = ex.First(a => a.Key == chartdetails.GroupKey.Trim()).Value.ToString();
+        //string qry = "select p3.itemid, p2.podate, p3.rate from purorder p2 join purorderitem p3 on (p2.po_id = p3.po_id and p2.siteid = 0 and p3.siteid = 0) left join itemmaster i on(p3.itemid = i.itemid) where p3.itemid =@id::int4";
+
+        var _param = new Param { IsSp = param.IsSp, QueryOrSp = param.QueryOrSp, Label = param.Label, Value = ItemCode };
+
+        string jsonChartstring = await dynamicAPIService.GetDatabyParam(StaticDataSource.MenuItem.ConnectionString, StaticDataSource.MenuItem.ProviderName, _param);
+        var response = JsonConvert.DeserializeObject<OutputData>(jsonChartstring);
+
+        if (response.DynamicData != null)
+        {
+            StaticDataSource.ChartDataObj = new ObservableCollection<ExpandoObject>(response.DynamicData);
+            List<DataClass> chartDataList = new List<DataClass>();
+            foreach (var inputAttribute in StaticDataSource.ChartDataObj)
+            {
+                DataClass row = new DataClass();
+                foreach (KeyValuePair<string, object> itm in inputAttribute)
+                {
+                    // Create a new dynamic ExpandoObject
+                    if (itm.Key.ToString() == "podate")
+                        row.XData = itm.Value.ToString();
+                    else if (itm.Key.ToString() == "rate")
+                        row.YData1 = (itm.Value == null) ? 0 : Convert.ToDouble((itm.Value.ToString()));
+                }
+                // Add the object to the dynamic output list
+                chartDataList.Add(row);
+            }
+            //value.ControlData = chartDataList;
+            updateedDataSource = chartDataList;
+            StateHasChanged();
+        }
+    }
+    public void ToolbarClickHandler(Syncfusion.Blazor.Navigations.ClickEventArgs Args)
+    {
+            if (Args.Item.Text == "PDF Export")
+            {
+                List<PdfHeaderFooterContent> HeaderContent = new List<PdfHeaderFooterContent>
+            {
+                new PdfHeaderFooterContent()
+                {
+                    Type = ContentType.Text,
+                    Value = chartdetails.Title,
+                    Position = new PdfPosition() { X = 280, Y = 0 },
+                    Style = new PdfContentStyle() { TextBrushColor = "#000000", FontSize = 13 , HAlign=PdfHorizontalAlign.Center},
+                 }
+            };
+
+                PdfExportProperties ExportProperties = new PdfExportProperties();
+                ExportProperties.ExportType = Syncfusion.Blazor.Grids.ExportType.CurrentPage;
+                ExportProperties.FileName = chartdetails.Title + System.DateTime.Now + ".pdf";
+                PdfHeader Header = new PdfHeader()
+                {
+                    FromTop = 0,
+                    Height = 20,
+                    Contents = HeaderContent,
+
+                };
+                ExportProperties.Header = Header;
+                this.DefaultGrid.PdfExport(ExportProperties);
+            }
+            else if (Args.Item.Text == "Excel Export")
+            {
+                int count = DefaultGrid.Columns.Count;
+                //var heidencolumnCount = DefaultGrid.CurrentViewData;
+                ExcelExportProperties ExportProperties = new ExcelExportProperties();
+                ExportProperties.ExportType = Syncfusion.Blazor.Grids.ExportType.CurrentPage;
+                ExportProperties.FileName = chartdetails.Title + System.DateTime.Now + ".xlsx";
+                List<ExcelCell> ExcelCells1 = new List<ExcelCell> { new ExcelCell() { Index = 1, ColSpan = count, Value = chartdetails.Title, Style = new ExcelStyle() { FontColor = "#C25050", FontSize = 12, HAlign = ExcelHorizontalAlign.Center, Bold = true } } };
+                List<ExcelRow> ExcelRows = new List<ExcelRow>
+            {
+                new ExcelRow() { Index = 1,  Cells = ExcelCells1 },
+                new ExcelRow() { Index = 2},
+                };
+
+                ExcelHeader Header = new ExcelHeader()
+                {
+                    HeaderRows = 2,
+                    Rows = ExcelRows
+                };
+                ExportProperties.Header = Header;
+                DefaultGrid.ExcelExport(ExportProperties);
+            }
+            else if (Args.Item.Text == "Send Mail")
+            {
+                StaticDataSource.MailSendData = DefaultGrid.CurrentViewData.Cast<ExpandoObject>().ToList();
+                dialogService.Open<MailSender>("Send Mail", new Dictionary<string, object>() { { "MailSubject", chartdetails.Title } }, new DialogOptions() { Width = "70%", Height = "Auto" });
+            }
+    }
+    public async Task GetSelectedRecord(RowSelectEventArgs<ExpandoObject> args)
+    {
+        var SelectedRowIndexes = await this.DefaultGrid.GetSelectedRowIndexes();
+        SelectedProduct = args.Data;
+        this.DefaultGrid.SelectedRowIndex = SelectedRowIndexes.FirstOrDefault();
+        OnRowClick(SelectedProduct);
+        StateHasChanged();
+    } }
